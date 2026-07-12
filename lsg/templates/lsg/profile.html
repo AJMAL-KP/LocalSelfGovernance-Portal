@@ -1,0 +1,155 @@
+{% extends 'lsg/base.html' %}
+
+{% block title %}Profile - LSG Portal{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <!-- Left Column: Sidebar Navigation -->
+    <aside>
+        <div class="sidebar-nav">
+            <a href="{% url 'dashboard' %}">
+                <i class="bi bi-house-door-fill"></i>Home
+            </a>
+            <a href="#" class="text-secondary opacity-75 pe-none" tabindex="-1">
+                <i class="bi bi-megaphone"></i>Alerts <span class="badge-custom ms-auto">Coming Soon</span>
+            </a>
+            <a href="#" class="text-secondary opacity-75 pe-none" tabindex="-1">
+                <i class="bi bi-chat-left-text"></i>Complaints <span class="badge-custom ms-auto">Coming Soon</span>
+            </a>
+            <a href="#" class="text-secondary opacity-75 pe-none" tabindex="-1">
+                <i class="bi bi-file-earmark-text"></i>Documents <span class="badge-custom ms-auto">Coming Soon</span>
+            </a>
+            <a href="{% url 'profile' %}" class="active">
+                <i class="bi bi-person-circle"></i>Profile
+            </a>
+            <a href="#" class="text-secondary opacity-75 pe-none" tabindex="-1">
+                <i class="bi bi-gear"></i>Settings <span class="badge-custom ms-auto">Coming Soon</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Center Column: User Profile details -->
+    <main>
+        <div class="custom-card">
+            <!-- Profile Picture Section -->
+            <div class="text-center mb-4 border-bottom pb-4">
+                <div class="position-relative d-inline-block">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" class="rounded-circle border" style="width: 130px; height: 130px; object-fit: cover;" alt="Profile Picture">
+                    {% else %}
+                        <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle" style="width: 130px; height: 130px; font-size: 3.8rem; font-weight: bold; background: linear-gradient(135deg, var(--accent-color), #2980b9);">
+                            {{ user.name|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h3 class="fw-bold mt-3 mb-1">{{ user.name }}</h3>
+                <div class="mb-3">
+                    <span class="badge-custom fs-6 py-1 px-3">{{ user.get_role_display }}</span>
+                </div>
+                
+                <!-- Profile Image Actions -->
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <form method="post" enctype="multipart/form-data" class="m-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="upload">
+                        <label for="upload-input" class="lsg-btn-outline py-1 px-3" style="font-size: 0.85rem; cursor: pointer; margin: 0;">
+                            <i class="bi bi-camera-fill me-1"></i>{% if user.profile_picture %}Change Photo{% else %}Upload Photo{% endif %}
+                        </label>
+                        <input type="file" name="profile_picture" id="upload-input" class="d-none" onchange="this.form.submit()" accept="image/*">
+                    </form>
+                    
+                    {% if user.profile_picture %}
+                        <form method="post" class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <button type="submit" class="lsg-btn-danger py-1 px-3" style="font-size: 0.85rem; margin: 0;">
+                                <i class="bi bi-trash-fill me-1"></i>Remove
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Personal details -->
+            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-person-fill me-2"></i>Personal Details
+            </h5>
+            <div class="info-row">
+                <span class="info-label">Full Name</span>
+                <span class="info-val">{{ user.name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Age</span>
+                <span class="info-val">{{ user.age|default:"Not specified" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email Address</span>
+                <span class="info-val">{{ user.email }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone Number</span>
+                <span class="info-val">{{ user.phone }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Aadhar ID</span>
+                <span class="info-val">{{ user.aadhar_id }}</span>
+            </div>
+
+            <!-- Jurisdiction details -->
+            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3 mt-4">
+                <i class="bi bi-geo-alt-fill me-2"></i>Governance Jurisdiction
+            </h5>
+            <div class="info-row">
+                <span class="info-label">Taluk</span>
+                <span class="info-val">{{ user.panchayat.taluk.name|default:"Not specified" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Panchayat</span>
+                <span class="info-val">{{ user.panchayat.name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Ward</span>
+                <span class="info-val">Ward {{ user.ward.number }}{% if user.ward.name %} ({{ user.ward.name }}){% endif %}</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Right Column: Ward Members of User's Panchayat -->
+    <aside>
+        <div class="ward-member-list">
+            <h5 class="fw-bold text-primary mb-3">
+                <i class="bi bi-people-fill me-2"></i>Ward Members
+            </h5>
+            <p class="text-secondary small mb-4">
+                Elected representatives for <strong>{{ user.panchayat.name }}</strong>:
+            </p>
+            
+            {% if ward_members %}
+                {% for member in ward_members %}
+                    <div class="member-item">
+                        <div class="member-avatar">
+                            {% if member.profile_picture %}
+                                <img src="{{ member.profile_picture.url }}" class="rounded-circle" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ member.name }}">
+                            {% else %}
+                                {{ member.name|slice:":1"|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="member-info">
+                            <h6 class="member-name">{{ member.name }}</h6>
+                            <p class="member-role">Ward {{ member.ward.number }} Member</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4 text-secondary">
+                    <i class="bi bi-person-x mb-2 display-6"></i>
+                    <p class="small mb-0">No Ward Members registered for this Panchayat yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </aside>
+
+</div>
+{% endblock %}
