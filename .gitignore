@@ -1,0 +1,27 @@
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.env
+.venv
+venv/
+ENV/
+
+# Django media and static collected
+/media/
+/static_collected/
+
+# SQLite databases (if any)
+*.sqlite3
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
