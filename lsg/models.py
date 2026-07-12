@@ -57,7 +57,8 @@ class User(AbstractUser):
         blank=True,
         verbose_name="Aadhar ID"
     )
-    phone = models.CharField(max_length=15, blank=True)
+    phone = models.CharField(max_length=15, blank=True, unique=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True, verbose_name="Profile Picture")
     
     # Relations for self governance hierarchy
     panchayat = models.ForeignKey(

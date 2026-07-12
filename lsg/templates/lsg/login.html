@@ -1,0 +1,57 @@
+{% extends 'lsg/base.html' %}
+
+{% block title %}Login - LSG Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="custom-card my-5">
+            <h3 class="text-center mb-4 fw-bold text-primary">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Welcome Back
+            </h3>
+            
+            {% if form.non_field_errors %}
+                <div class="lsg-alert-error">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Email Field -->
+                <div class="mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="lsg-label">Email Address</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{% for error in form.email.errors %}{{ error }}{% endfor %}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Password Field -->
+                <div class="mb-4">
+                    <label for="{{ form.password.id_for_label }}" class="lsg-label">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="text-danger small mt-1">{% for error in form.password.errors %}{{ error }}{% endfor %}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="lsg-btn-primary w-100 py-2">
+                    <i class="bi bi-shield-lock-fill me-2"></i>Login
+                </button>
+            </form>
+            
+            <div class="text-center mt-4">
+                <span class="text-secondary">New to LSG Portal?</span>
+                <a href="{% url 'register' %}" class="text-decoration-none fw-bold ms-1">Create an account</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
