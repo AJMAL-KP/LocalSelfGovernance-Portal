@@ -1,0 +1,77 @@
+{% extends 'lsg/base.html' %}
+
+{% block title %}Posts - LSG Portal{% endblock %}
+
+{% block content %}
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="lsg-alert-info">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>{{ message }}</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="dashboard-layout">
+    
+    <!-- Left Column: Sidebar Navigation -->
+    <aside>
+        {% include 'lsg/sidebar.html' with active_page='posts' %}
+    </aside>
+
+    <!-- Center Column: Main Content (Posts Feed) -->
+    <main>
+        <!-- Welcome Jumbotron -->
+        <div class="custom-card text-white border-0" style="background: linear-gradient(135deg, var(--accent-color), #2980b9); box-shadow: 0 10px 20px rgba(52,152,219,0.2);">
+            <h2 class="fw-bold mb-2">Welcome back, {{ user.name|default:user.username }}!</h2>
+            <p class="mb-0 opacity-90">
+                You are logged in as a <strong>{{ user.get_role_display }}</strong> of 
+                <strong>{{ user.panchayat.name }}</strong> (Ward {{ user.ward.number }}{% if user.ward.name %} - {{ user.ward.name }}{% endif %}).
+            </p>
+        </div>
+
+        <!-- Posts Actions & Feed Placeholder -->
+        <div class="custom-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold text-primary mb-0">
+                    <i class="bi bi-card-text me-2"></i>Posts Feed
+                </h4>
+                
+                {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_ADMIN' %}
+                    <button class="lsg-btn-primary py-1 px-3" style="font-size: 0.85rem;" disabled>
+                        <i class="bi bi-plus-circle me-1"></i>Create Post
+                    </button>
+                {% endif %}
+            </div>
+
+            <!-- Role explanation badge/alert -->
+            <div class="mb-4 text-secondary small bg-light p-3 rounded border">
+                <i class="bi bi-shield-check text-success me-1"></i>
+                {% if user.role == 'VILLAGER' %}
+                    As a <strong>Villager</strong>, you have read-only access to posts published within your Panchayat and Ward.
+                {% elif user.role == 'WARD_MEMBER' %}
+                    As a <strong>Ward Member</strong>, you can publish posts visible only to villagers of <strong>Ward {{ user.ward.number }}</strong>.
+                {% elif user.role == 'PANCHAYAT_ADMIN' %}
+                    As a <strong>Panchayat Admin</strong>, you can publish posts visible to all villagers across the entire <strong>{{ user.panchayat.name }}</strong>.
+                {% endif %}
+            </div>
+
+            <div class="border-dashed text-center py-5">
+                <i class="bi bi-chat-square-text text-secondary mb-3 display-4"></i>
+                <h5 class="fw-bold text-secondary">No Posts Yet</h5>
+                <p class="text-secondary small max-width-md mx-auto mb-0 px-3">
+                    The posts feed is currently empty. The capability to publish and view Panchayat and Ward updates will be introduced in the next development phase.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Right Column: Ward Members of User's Panchayat -->
+    <aside>
+        {% include 'lsg/ward_members_sidebar.html' %}
+    </aside>
+
+</div>
+{% endblock %}

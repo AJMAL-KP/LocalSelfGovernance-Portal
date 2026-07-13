@@ -1,0 +1,56 @@
+{% extends 'lsg/base.html' %}
+
+{% block title %}Documents - LSG Portal{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <!-- Left Column: Sidebar Navigation -->
+    <aside>
+        {% include 'lsg/sidebar.html' with active_page='documents' %}
+    </aside>
+
+    <!-- Center Column: Main Content -->
+    <main>
+        <div class="custom-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold text-primary mb-0">
+                    <i class="bi bi-file-earmark-text me-2"></i>Official Documents & Schemes
+                </h4>
+                
+                {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_ADMIN' %}
+                    <button class="lsg-btn-primary py-1 px-3" style="font-size: 0.85rem;" disabled>
+                        <i class="bi bi-upload me-1"></i>Upload Document
+                    </button>
+                {% endif %}
+            </div>
+
+            <!-- Role explanation -->
+            <div class="mb-4 text-secondary small bg-light p-3 rounded border">
+                <i class="bi bi-info-circle text-primary me-1"></i>
+                {% if user.role == 'VILLAGER' %}
+                    Access scheme details, meeting logs, and governance guidelines uploaded for your area.
+                {% elif user.role == 'WARD_MEMBER' %}
+                    Upload and manage official documents for <strong>Ward {{ user.ward.number }}</strong>.
+                {% elif user.role == 'PANCHAYAT_ADMIN' %}
+                    Upload and manage official circulars, development plans, and documents for the <strong>{{ user.panchayat.name }}</strong>.
+                {% endif %}
+            </div>
+
+            <div class="border-dashed text-center py-5">
+                <i class="bi bi-folder-x text-secondary mb-3 display-4"></i>
+                <h5 class="fw-bold text-secondary">No Documents Available</h5>
+                <p class="text-secondary small max-width-md mx-auto mb-0 px-3">
+                    No official circulars, schemes, or local documents have been shared yet.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Right Column: Ward Members of User's Panchayat -->
+    <aside>
+        {% include 'lsg/ward_members_sidebar.html' %}
+    </aside>
+
+</div>
+{% endblock %}

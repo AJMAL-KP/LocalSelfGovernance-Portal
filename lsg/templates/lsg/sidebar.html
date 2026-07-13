@@ -1,0 +1,23 @@
+<div class="sidebar-nav">
+    <a href="{% url 'posts' %}" class="{% if active_page == 'posts' %}active{% endif %}">
+        <i class="bi bi-card-text"></i>Posts
+    </a>
+    <a href="{% url 'complaints' %}" class="{% if active_page == 'complaints' %}active{% endif %}">
+        <i class="bi bi-chat-left-text"></i>Complaints
+    </a>
+    <a href="{% url 'documents' %}" class="{% if active_page == 'documents' %}active{% endif %}">
+        <i class="bi bi-file-earmark-text"></i>Documents
+    </a>
+    <a href="{% url 'alerts' %}"
+        class="{% if active_page == 'alerts' or active_page == 'announcements' %}active{% endif %}">
+        <i class="bi bi-megaphone"></i>Alerts
+    </a>
+    {% if user.role == 'PANCHAYAT_ADMIN' %}
+    <a href="{% url 'manage_users' %}" class="{% if active_page == 'manage_users' %}active{% endif %}">
+        <i class="bi bi-people"></i>Manage Users
+    </a>
+    {% endif %}
+    <a href="{% url 'profile' %}" class="{% if active_page == 'profile' %}active{% endif %}">
+        <i class="bi bi-person-circle"></i>Profile
+    </a>
+</div>

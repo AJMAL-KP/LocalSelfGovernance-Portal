@@ -7,26 +7,7 @@
     
     <!-- Left Column: Sidebar Navigation -->
     <aside>
-        <div class="sidebar-nav">
-            <a href="{% url 'dashboard' %}">
-                <i class="bi bi-house-door-fill"></i>Home
-            </a>
-            <a href="#" class="text-secondary opacity-75 pe-none" tabindex="-1">
-                <i class="bi bi-megaphone"></i>Alerts <span class="badge-custom ms-auto">Coming Soon</span>
-            </a>
-            <a href="#" class="text-secondary opacity-75 pe-none" tabindex="-1">
-                <i class="bi bi-chat-left-text"></i>Complaints <span class="badge-custom ms-auto">Coming Soon</span>
-            </a>
-            <a href="#" class="text-secondary opacity-75 pe-none" tabindex="-1">
-                <i class="bi bi-file-earmark-text"></i>Documents <span class="badge-custom ms-auto">Coming Soon</span>
-            </a>
-            <a href="{% url 'profile' %}" class="active">
-                <i class="bi bi-person-circle"></i>Profile
-            </a>
-            <a href="#" class="text-secondary opacity-75 pe-none" tabindex="-1">
-                <i class="bi bi-gear"></i>Settings <span class="badge-custom ms-auto">Coming Soon</span>
-            </a>
-        </div>
+        {% include 'lsg/sidebar.html' with active_page='profile' %}
     </aside>
 
     <!-- Center Column: User Profile details -->
@@ -118,37 +99,7 @@
 
     <!-- Right Column: Ward Members of User's Panchayat -->
     <aside>
-        <div class="ward-member-list">
-            <h5 class="fw-bold text-primary mb-3">
-                <i class="bi bi-people-fill me-2"></i>Ward Members
-            </h5>
-            <p class="text-secondary small mb-4">
-                Elected representatives for <strong>{{ user.panchayat.name }}</strong>:
-            </p>
-            
-            {% if ward_members %}
-                {% for member in ward_members %}
-                    <div class="member-item">
-                        <div class="member-avatar">
-                            {% if member.profile_picture %}
-                                <img src="{{ member.profile_picture.url }}" class="rounded-circle" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ member.name }}">
-                            {% else %}
-                                {{ member.name|slice:":1"|upper }}
-                            {% endif %}
-                        </div>
-                        <div class="member-info">
-                            <h6 class="member-name">{{ member.name }}</h6>
-                            <p class="member-role">Ward {{ member.ward.number }} Member</p>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="text-center py-4 text-secondary">
-                    <i class="bi bi-person-x mb-2 display-6"></i>
-                    <p class="small mb-0">No Ward Members registered for this Panchayat yet.</p>
-                </div>
-            {% endif %}
-        </div>
+        {% include 'lsg/ward_members_sidebar.html' %}
     </aside>
 
 </div>

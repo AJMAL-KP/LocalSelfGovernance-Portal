@@ -214,3 +214,99 @@ class AuthenticationTests(TestCase):
         # Test profile redirects to login now
         response = self.client.get(reverse('profile'))
         self.assertRedirects(response, '/login/?next=/profile/')
+
+
+class AuthorizationAndDashboardTests(TestCase):
+
+    def setUp(self):
+        # Set up a Taluk, Panchayat, and Ward
+        self.taluk = Taluk.objects.create(name="Central Taluk")
+        self.panchayat = Panchayat.objects.create(name="Panchayat A", taluk=self.taluk)
+        self.ward = Ward.objects.create(number=1, name="Ward 1", panchayat=self.panchayat)
+
+        # Create user accounts for each role
+        self.villager = User.objects.create_user(
+            username='villager@example.com',
+            email='villager@example.com',
+            password='password123',
+            name='Villager User',
+            aadhar_id='111111111111',
+            phone='9876543210',
+            panchayat=self.panchayat,
+            ward=self.ward,
+            age=25,
+            role=Role.VILLAGER
+        )
+        self.ward_member = User.objects.create_user(
+            username='member@example.com',
+            email='member@example.com',
+            password='password123',
+            name='Ward Member User',
+            aadhar_id='222222222222',
+            phone='9876543211',
+            panchayat=self.panchayat,
+            ward=self.ward,
+            age=30,
+            role=Role.WARD_MEMBER
+        )
+        self.panchayat_admin = User.objects.create_user(
+            username='admin@example.com',
+            email='admin@example.com',
+            password='password123',
+            name='Panchayat Admin User',
+            aadhar_id='333333333333',
+            phone='9876543212',
+            panchayat=self.panchayat,
+            ward=self.ward,
+            age=35,
+            role=Role.PANCHAYAT_ADMIN
+        )
+
+    def test_root_dashboard_redirects_to_posts(self):
+        self.client.force_login(self.villager)
+        response = self.client.get(reverse('dashboard'))
+        self.assertRedirects(response, reverse('posts'))
+
+    def test_unauthenticated_users_redirected(self):
+        protected_urls = ['posts', 'alerts', 'documents', 'complaints', 'manage_users', 'profile']
+        for name in protected_urls:
+            response = self.client.get(reverse(name))
+            self.assertRedirects(response, f'/login/?next={reverse(name)}')
+
+    def test_manage_users_access_control(self):
+        # Villager should be redirected to posts with a message
+        self.client.force_login(self.villager)
+        response = self.client.get(reverse('manage_users'))
+        self.assertRedirects(response, reverse('posts'))
+        
+        # Ward Member should be redirected to posts with a message
+        self.client.force_login(self.ward_member)
+        response = self.client.get(reverse('manage_users'))
+        self.assertRedirects(response, reverse('posts'))
+
+        # Panchayat Admin should be allowed
+        self.client.force_login(self.panchayat_admin)
+        response = self.client.get(reverse('manage_users'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Panchayat User Management')
+
+    def test_sidebar_role_based_menu_rendering(self):
+        # 1. Villager Sidebar Verification
+        self.client.force_login(self.villager)
+        response = self.client.get(reverse('posts'))
+        self.assertContains(response, 'Posts')
+        self.assertContains(response, 'Announcements')
+        self.assertContains(response, 'Complaints')
+        self.assertContains(response, 'Documents')
+        self.assertContains(response, 'Profile')
+        self.assertNotContains(response, 'Manage Users')
+
+        # 2. Panchayat Admin Sidebar Verification
+        self.client.force_login(self.panchayat_admin)
+        response = self.client.get(reverse('posts'))
+        self.assertContains(response, 'Posts')
+        self.assertContains(response, 'Announcements')
+        self.assertContains(response, 'Complaints')
+        self.assertContains(response, 'Documents')
+        self.assertContains(response, 'Profile')
+        self.assertContains(response, 'Manage Users')
