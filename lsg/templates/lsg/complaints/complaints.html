@@ -1,13 +1,13 @@
 {% extends 'lsg/base.html' %}
 
-{% block title %}Documents - LSG Portal{% endblock %}
+{% block title %}Complaints - LSG Portal{% endblock %}
 
 {% block content %}
 <div class="dashboard-layout">
     
     <!-- Left Column: Sidebar Navigation -->
     <aside>
-        {% include 'lsg/sidebar.html' with active_page='documents' %}
+        {% include 'lsg/partials/sidebar.html' with active_page='complaints' %}
     </aside>
 
     <!-- Center Column: Main Content -->
@@ -15,33 +15,33 @@
         <div class="custom-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="fw-bold text-primary mb-0">
-                    <i class="bi bi-file-earmark-text me-2"></i>Official Documents & Schemes
+                    <i class="bi bi-chat-left-text me-2"></i>Grievance & Complaints Redressal
                 </h4>
                 
-                {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_ADMIN' %}
+                {% if user.role == 'VILLAGER' %}
                     <button class="lsg-btn-primary py-1 px-3" style="font-size: 0.85rem;" disabled>
-                        <i class="bi bi-upload me-1"></i>Upload Document
+                        <i class="bi bi-plus-circle me-1"></i>File Complaint
                     </button>
                 {% endif %}
             </div>
 
             <!-- Role explanation -->
             <div class="mb-4 text-secondary small bg-light p-3 rounded border">
-                <i class="bi bi-info-circle text-primary me-1"></i>
+                <i class="bi bi-shield-exclamation text-warning me-1"></i>
                 {% if user.role == 'VILLAGER' %}
-                    Access scheme details, meeting logs, and governance guidelines uploaded for your area.
+                    Report civic issues directly to your Ward Member or Panchayat Admin. You will be able to track resolution status here.
                 {% elif user.role == 'WARD_MEMBER' %}
-                    Upload and manage official documents for <strong>Ward {{ user.ward.number }}</strong>.
+                    Review, assign progress status, and mark grievances resolved for villagers in <strong>Ward {{ user.ward.number }}</strong>.
                 {% elif user.role == 'PANCHAYAT_ADMIN' %}
-                    Upload and manage official circulars, development plans, and documents for the <strong>{{ user.panchayat.name }}</strong>.
+                    Monitor and oversee the status of all complaints logged across all Wards under <strong>{{ user.panchayat.name }}</strong>.
                 {% endif %}
             </div>
 
             <div class="border-dashed text-center py-5">
-                <i class="bi bi-folder-x text-secondary mb-3 display-4"></i>
-                <h5 class="fw-bold text-secondary">No Documents Available</h5>
+                <i class="bi bi-journal-check text-secondary mb-3 display-4"></i>
+                <h5 class="fw-bold text-secondary">No Active Complaints</h5>
                 <p class="text-secondary small max-width-md mx-auto mb-0 px-3">
-                    No official circulars, schemes, or local documents have been shared yet.
+                    There are no recorded grievances or active complaints listed for your area at this time.
                 </p>
             </div>
         </div>
@@ -49,7 +49,7 @@
 
     <!-- Right Column: Ward Members of User's Panchayat -->
     <aside>
-        {% include 'lsg/ward_members_sidebar.html' %}
+        {% include 'lsg/partials/ward_members_sidebar.html' %}
     </aside>
 
 </div>

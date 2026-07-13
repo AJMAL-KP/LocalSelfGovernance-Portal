@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from .models import Taluk, Panchayat, Ward, User, Role
-from .forms import RegistrationForm, LoginForm
+from lsg.forms.auth import RegistrationForm, LoginForm
 
 class AuthenticationTests(TestCase):
 
