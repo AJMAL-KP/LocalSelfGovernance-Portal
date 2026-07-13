@@ -1,0 +1,96 @@
+{% extends 'lsg/base.html' %}
+
+{% block title %}Settings - LSG Portal{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <!-- Left Column: Sidebar Navigation -->
+    <aside>
+        {% include 'lsg/partials/sidebar.html' with active_page='settings' %}
+    </aside>
+
+    <!-- Center Column: Settings Page -->
+    <main>
+        <!-- Change Email Card -->
+        <div class="custom-card mb-4">
+            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-envelope-fill me-2"></i>Change Email Address
+            </h5>
+            
+            <form method="post" class="needs-validation">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_email">
+                
+                <div class="mb-3">
+                    <label for="{{ email_form.email.id_for_label }}" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">New Email Address</label>
+                    {{ email_form.email }}
+                    {% if active_form == 'email' and email_form.email.errors %}
+                        <div class="text-danger mt-1" style="font-size: 0.85rem;">
+                            {{ email_form.email.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <div class="form-text text-muted mt-2" style="font-size: 0.8rem;">
+                        Note: Changing your email will also change your login username.
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="lsg-btn-primary py-2 px-4" style="font-size: 0.9rem;">
+                        <i class="bi bi-save me-1"></i>Update Email
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Change Password Card -->
+        <div class="custom-card">
+            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-shield-lock-fill me-2"></i>Change Password
+            </h5>
+            
+            <form method="post" class="needs-validation">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="change_password">
+                
+                {% if active_form == 'password' and password_form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius: 8px; font-size: 0.9rem;">
+                        {% for error in password_form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% for field in password_form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <div class="form-text text-muted mt-1" style="font-size: 0.8rem;">
+                                {{ field.help_text|safe }}
+                            </div>
+                        {% endif %}
+                        {% if active_form == 'password' and field.errors %}
+                            <div class="text-danger mt-1" style="font-size: 0.85rem;">
+                                {{ field.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="lsg-btn-primary py-2 px-4" style="font-size: 0.9rem;">
+                        <i class="bi bi-key me-1"></i>Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Right Column: Ward Members of User's Panchayat -->
+    <aside>
+        {% include 'lsg/partials/ward_members_sidebar.html' %}
+    </aside>
+
+</div>
+{% endblock %}
