@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from .forms import RegistrationForm, LoginForm
 from .models import User, Role, Panchayat, Ward
+from .decorators import panchayat_admin_required
+
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -52,22 +54,64 @@ def logout_view(request):
 @login_required(login_url='login')
 @never_cache
 def dashboard_view(request):
-    user = request.user
-    if user.is_superuser:
+    if request.user.is_superuser:
         return redirect('admin:index')
-        
-    # Get ward members belonging to the same Panchayat
-    ward_members = []
-    if user.panchayat:
-        ward_members = User.objects.filter(
+    return redirect('posts')
+
+def get_ward_members(user):
+    if user.is_authenticated and user.panchayat:
+        return User.objects.filter(
             role=Role.WARD_MEMBER,
             panchayat=user.panchayat
         ).order_by('ward__number', 'name')
+    return []
 
-    return render(request, 'lsg/dashboard.html', {
-        'user': user,
-        'ward_members': ward_members
+@login_required(login_url='login')
+@never_cache
+def posts_list_view(request):
+    return render(request, 'lsg/posts.html', {
+        'user': request.user,
+        'ward_members': get_ward_members(request.user)
     })
+
+@login_required(login_url='login')
+@never_cache
+def alerts_list_view(request):
+    return render(request, 'lsg/alerts.html', {
+        'user': request.user,
+        'ward_members': get_ward_members(request.user)
+    })
+
+@login_required(login_url='login')
+@never_cache
+def documents_list_view(request):
+    return render(request, 'lsg/documents.html', {
+        'user': request.user,
+        'ward_members': get_ward_members(request.user)
+    })
+
+@login_required(login_url='login')
+@never_cache
+def complaints_list_view(request):
+    return render(request, 'lsg/complaints.html', {
+        'user': request.user,
+        'ward_members': get_ward_members(request.user)
+    })
+
+@panchayat_admin_required
+@never_cache
+def manage_users_view(request):
+    # Fetch registered users in the admin's Panchayat
+    users = []
+    if request.user.panchayat:
+        users = User.objects.filter(
+            panchayat=request.user.panchayat
+        ).exclude(id=request.user.id).exclude(is_superuser=True).order_by('role', 'name')
+        
+    return render(request, 'lsg/manage_users.html', {
+        'users': users
+    })
+
 
 @login_required(login_url='login')
 @never_cache
@@ -90,15 +134,7 @@ def profile_view(request):
                 user.profile_picture.delete(save=True)
         return redirect('profile')
 
-    # Get ward members belonging to the same Panchayat
-    ward_members = []
-    if user.panchayat:
-        ward_members = User.objects.filter(
-            role=Role.WARD_MEMBER,
-            panchayat=user.panchayat
-        ).order_by('ward__number', 'name')
-        
     return render(request, 'lsg/profile.html', {
         'user': user,
-        'ward_members': ward_members
+        'ward_members': get_ward_members(user)
     })
