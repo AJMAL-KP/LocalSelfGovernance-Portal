@@ -1,7 +1,7 @@
 import re
 from django import forms
 from django.contrib.auth import authenticate
-from .models import User, Panchayat, Ward
+from lsg.models import User, Panchayat, Ward
 
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(

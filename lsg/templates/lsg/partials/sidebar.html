@@ -8,9 +8,8 @@
     <a href="{% url 'documents' %}" class="{% if active_page == 'documents' %}active{% endif %}">
         <i class="bi bi-file-earmark-text"></i>Documents
     </a>
-    <a href="{% url 'alerts' %}"
-        class="{% if active_page == 'alerts' or active_page == 'announcements' %}active{% endif %}">
-        <i class="bi bi-megaphone"></i>Alerts
+    <a href="{% url 'alerts' %}" class="{% if active_page == 'alerts' or active_page == 'announcements' %}active{% endif %}">
+        <i class="bi bi-megaphone"></i>Announcements
     </a>
     {% if user.role == 'PANCHAYAT_ADMIN' %}
     <a href="{% url 'manage_users' %}" class="{% if active_page == 'manage_users' %}active{% endif %}">

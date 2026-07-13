@@ -1,0 +1,19 @@
+{% extends 'lsg/base.html' %}
+
+{% block title %}Assign Representative - LSG Portal{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside>
+        {% include 'lsg/partials/sidebar.html' with active_page='manage_users' %}
+    </aside>
+    <main style="grid-column: span 2;">
+        <div class="custom-card">
+            <h4 class="fw-bold text-primary mb-3">Assign Representative</h4>
+            <div class="border-dashed text-center py-5">
+                <p class="text-secondary mb-0">Placeholder for assigning Ward Members or Panchayat roles.</p>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

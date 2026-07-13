@@ -1,0 +1,17 @@
+{% if messages %}
+    <div class="messages-container mb-4">
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+                <div class="lsg-alert-error">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div>{{ message }}</div>
+                </div>
+            {% else %}
+                <div class="lsg-alert-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <div>{{ message }}</div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}

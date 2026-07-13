@@ -1,0 +1,22 @@
+{% extends 'lsg/base.html' %}
+
+{% block title %}Complaint Details - LSG Portal{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside>
+        {% include 'lsg/partials/sidebar.html' with active_page='complaints' %}
+    </aside>
+    <main>
+        <div class="custom-card">
+            <h4 class="fw-bold text-primary mb-3">Complaint Details</h4>
+            <div class="border-dashed text-center py-5">
+                <p class="text-secondary mb-0">Detail view placeholder for a specific complaint.</p>
+            </div>
+        </div>
+    </main>
+    <aside>
+        {% include 'lsg/partials/ward_members_sidebar.html' %}
+    </aside>
+</div>
+{% endblock %}
