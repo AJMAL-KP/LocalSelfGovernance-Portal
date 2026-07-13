@@ -200,7 +200,7 @@ class AuthenticationTests(TestCase):
             'password': 'password123'
         }
         response = self.client.post(reverse('login'), data=login_data)
-        self.assertRedirects(response, reverse('profile'))
+        self.assertRedirects(response, reverse('posts'))
         
         # Test profile is accessible
         response = self.client.get(reverse('profile'))
@@ -310,3 +310,162 @@ class AuthorizationAndDashboardTests(TestCase):
         self.assertContains(response, 'Documents')
         self.assertContains(response, 'Profile')
         self.assertContains(response, 'Manage Users')
+
+
+class ProfileAndSettingsTests(TestCase):
+
+    def setUp(self):
+        # Set up a Taluk, Panchayat, and Ward
+        self.taluk = Taluk.objects.create(name="Central Taluk")
+        self.panchayat = Panchayat.objects.create(name="Panchayat A", taluk=self.taluk)
+        self.ward = Ward.objects.create(number=1, name="Ward 1", panchayat=self.panchayat)
+
+        # Create user
+        self.user = User.objects.create_user(
+            username='user@example.com',
+            email='user@example.com',
+            password='password123',
+            name='Original Name',
+            aadhar_id='111111111111',
+            phone='9876543210',
+            panchayat=self.panchayat,
+            ward=self.ward,
+            age=25,
+            role=Role.VILLAGER
+        )
+        # Create second user to test uniqueness validations
+        self.other_user = User.objects.create_user(
+            username='other@example.com',
+            email='other@example.com',
+            password='password123',
+            name='Other Name',
+            aadhar_id='222222222222',
+            phone='9876543211',
+            panchayat=self.panchayat,
+            ward=self.ward,
+            age=30,
+            role=Role.VILLAGER
+        )
+
+    def test_profile_view_requires_login(self):
+        response = self.client.get(reverse('profile'))
+        self.assertRedirects(response, f'/login/?next={reverse("profile")}')
+
+    def test_settings_view_requires_login(self):
+        response = self.client.get(reverse('settings'))
+        self.assertRedirects(response, f'/login/?next={reverse("settings")}')
+
+    def test_profile_update_success(self):
+        self.client.force_login(self.user)
+        # Verify initial state
+        self.assertEqual(self.user.name, 'Original Name')
+        self.assertEqual(self.user.phone, '9876543210')
+        self.assertEqual(self.user.age, 25)
+
+        # Perform update via POST
+        update_data = {
+            'action': 'update_profile',
+            'name': 'Updated Name',
+            'phone': '9876543212',
+            'age': 28,
+        }
+        response = self.client.post(reverse('profile'), data=update_data)
+        self.assertRedirects(response, reverse('profile'))
+
+        # Fetch updated user from DB
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, 'Updated Name')
+        self.assertEqual(self.user.phone, '9876543212')
+        self.assertEqual(self.user.age, 28)
+
+    def test_profile_update_invalid_phone(self):
+        self.client.force_login(self.user)
+        # Attempt update with invalid phone
+        update_data = {
+            'action': 'update_profile',
+            'name': 'Updated Name',
+            'phone': '1234567890', # Must start with 6-9
+            'age': 25,
+        }
+        response = self.client.post(reverse('profile'), data=update_data)
+        self.assertEqual(response.status_code, 200)
+        # Should render form errors and keep show_edit_modal as True
+        self.assertTrue(response.context['show_edit_modal'])
+        self.assertFormError(response, 'profile_form', 'phone', 'Phone number must be a valid 10-digit Indian number.')
+
+        # Database should not change
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, 'Original Name')
+
+    def test_profile_update_duplicate_phone(self):
+        self.client.force_login(self.user)
+        # Attempt update using other_user's phone
+        update_data = {
+            'action': 'update_profile',
+            'name': 'Updated Name',
+            'phone': '9876543211', # other_user's phone
+            'age': 25,
+        }
+        response = self.client.post(reverse('profile'), data=update_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['show_edit_modal'])
+        self.assertFormError(response, 'profile_form', 'phone', 'A user with this phone number already exists.')
+
+    def test_profile_update_invalid_age(self):
+        self.client.force_login(self.user)
+        # Attempt update with age under 18
+        update_data = {
+            'action': 'update_profile',
+            'name': 'Updated Name',
+            'phone': '9876543212',
+            'age': 17,
+        }
+        response = self.client.post(reverse('profile'), data=update_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['show_edit_modal'])
+        self.assertFormError(response, 'profile_form', 'age', 'You must be 18 years or older.')
+
+
+    def test_email_change_success(self):
+        self.client.force_login(self.user)
+        # Change email
+        email_data = {
+            'action': 'change_email',
+            'email': 'newemail@example.com'
+        }
+        response = self.client.post(reverse('settings'), data=email_data)
+        self.assertRedirects(response, reverse('settings'))
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'newemail@example.com')
+        # Username must update too so they can log in
+        self.assertEqual(self.user.username, 'newemail@example.com')
+
+    def test_email_change_duplicate(self):
+        self.client.force_login(self.user)
+        # Try to use other_user's email
+        email_data = {
+            'action': 'change_email',
+            'email': 'other@example.com'
+        }
+        response = self.client.post(reverse('settings'), data=email_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(response, 'email_form', 'email', 'A user with this email address already exists.')
+
+    def test_password_change_success(self):
+        self.client.force_login(self.user)
+        # Change password
+        password_data = {
+            'action': 'change_password',
+            'old_password': 'password123',
+            'new_password1': 'newsecurepassword123',
+            'new_password2': 'newsecurepassword123',
+        }
+        response = self.client.post(reverse('settings'), data=password_data)
+        self.assertRedirects(response, reverse('settings'))
+
+        # Verify password has changed by trying to authenticate
+        from django.contrib.auth import authenticate
+        authenticated_user = authenticate(username=self.user.username, password='newsecurepassword123')
+        self.assertIsNotNone(authenticated_user)
+

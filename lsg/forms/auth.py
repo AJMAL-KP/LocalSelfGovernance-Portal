@@ -140,3 +140,56 @@ class LoginForm(forms.Form):
             cleaned_data['user'] = authenticated_user
 
         return cleaned_data
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('name', 'phone', 'age')
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'lsg-input', 'placeholder': 'Full Name'}),
+            'phone': forms.TextInput(attrs={'class': 'lsg-input', 'placeholder': '10-digit Phone Number'}),
+            'age': forms.NumberInput(attrs={'class': 'lsg-input', 'placeholder': 'Age'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].required = True
+        self.fields['phone'].required = True
+        self.fields['age'].required = True
+
+    def clean_age(self):
+        age = self.cleaned_data.get('age')
+        if age is not None and age < 18:
+            raise forms.ValidationError("You must be 18 years or older.")
+        return age
+
+    def clean_phone(self):
+
+        phone = self.cleaned_data.get('phone')
+        if not phone:
+            return phone
+        if not re.match(r'^[6-9]\d{9}$', phone):
+            raise forms.ValidationError("Phone number must be a valid 10-digit Indian number.")
+        if User.objects.exclude(pk=self.instance.pk).filter(phone=phone).exists():
+            raise forms.ValidationError("A user with this phone number already exists.")
+        return phone
+
+
+class EmailChangeForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('email',)
+        widgets = {
+            'email': forms.EmailInput(attrs={'class': 'lsg-input', 'placeholder': 'Email Address'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = True
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
+            raise forms.ValidationError("A user with this email address already exists.")
+        return email
