@@ -3,188 +3,187 @@
 {% block title %}Register - LSG Portal{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="custom-card my-4">
-            <h3 class="text-center mb-4 fw-bold text-primary">
-                <i class="bi bi-person-plus-fill me-2"></i>Create an Account
-            </h3>
+<div class="max-w-2xl mx-auto my-6 sm:my-10">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-xl dark:shadow-slate-950/50 p-6 sm:p-10">
+        <!-- Title & Icon -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mb-3 border border-indigo-100 dark:border-indigo-900/60">
+                <i class="bi bi-person-plus-fill text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Create an Account</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Register to access your Panchayat & Ward governance portal</p>
+        </div>
 
-            {% if form.non_field_errors %}
-            <div class="lsg-alert-error">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <div>
+        {% if form.non_field_errors %}
+            <div class="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 text-xs flex items-start gap-3">
+                <i class="bi bi-exclamation-triangle-fill text-rose-500 dark:text-rose-400 text-base shrink-0"></i>
+                <div class="space-y-1">
                     {% for error in form.non_field_errors %}
-                    <p class="mb-0">{{ error }}</p>
+                        <p>{{ error }}</p>
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
+        {% endif %}
 
-            <form method="post" novalidate>
-                {% csrf_token %}
+        <form method="post" novalidate class="space-y-5">
+            {% csrf_token %}
 
-                <!-- Email Field -->
-                <div class="mb-3">
-                    <label for="{{ form.email.id_for_label }}" class="lsg-label">Email Address </label>
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                    <div class="text-danger small mt-1">{% for error in form.email.errors %}{{ error }}{% endfor %}
-                    </div>
+            <!-- Email Field -->
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.email.errors %}{{ error }}{% endfor %}</p>
+                {% endif %}
+            </div>
+
+            <!-- Name Field -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Full Name</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.name.errors %}{{ error }}{% endfor %}</p>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <!-- Age Field -->
+                <div>
+                    <label for="{{ form.age.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Age</label>
+                    {{ form.age }}
+                    {% if form.age.errors %}
+                        <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.age.errors %}{{ error }}{% endfor %}</p>
                     {% endif %}
                 </div>
 
-                <!-- Name Field -->
-                <div class="mb-3">
-                    <label for="{{ form.name.id_for_label }}" class="lsg-label">Full Name </label>
-                    {{ form.name }}
-                    {% if form.name.errors %}
-                    <div class="text-danger small mt-1">{% for error in form.name.errors %}{{ error }}{% endfor %}</div>
+                <!-- Phone Field -->
+                <div>
+                    <label for="{{ form.phone.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Phone Number</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.phone.errors %}{{ error }}{% endfor %}</p>
                     {% endif %}
                 </div>
+            </div>
 
-                <div class="row">
-                    <!-- Age Field -->
-                    <div class="col-md-6 mb-3">
-                        <label for="{{ form.age.id_for_label }}" class="lsg-label">Age </label>
-                        {{ form.age }}
-                        {% if form.age.errors %}
-                        <div class="text-danger small mt-1">{% for error in form.age.errors %}{{ error }}{% endfor %}</div>
-                        {% endif %}
-                    </div>
+            <!-- Aadhar ID Field -->
+            <div>
+                <label for="{{ form.aadhar_id.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Aadhar ID (12 digits)</label>
+                {{ form.aadhar_id }}
+                {% if form.aadhar_id.errors %}
+                    <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.aadhar_id.errors %}{{ error }}{% endfor %}</p>
+                {% endif %}
+            </div>
 
-                    <!-- Phone Field -->
-                    <div class="col-md-6 mb-3">
-                        <label for="{{ form.phone.id_for_label }}" class="lsg-label">Phone Number </label>
-                        {{ form.phone }}
-                        {% if form.phone.errors %}
-                        <div class="text-danger small mt-1">{% for error in form.phone.errors %}{{ error }}{% endfor %}
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Aadhar ID Field -->
-                <div class="mb-3">
-                    <label for="{{ form.aadhar_id.id_for_label }}" class="lsg-label">Aadhar ID (12 digits)</label>
-                    {{ form.aadhar_id }}
-                    {% if form.aadhar_id.errors %}
-                    <div class="text-danger small mt-1">{% for error in form.aadhar_id.errors %}{{ error }}{% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="row">
-                    <!-- Custom Panchayat Dropdown -->
-                    <div class="col-md-6 mb-3">
-                        <label class="lsg-label">Panchayat </label>
-                        <div class="dropdown w-100">
-                            <button class="lsg-dropdown-trigger d-flex align-items-center justify-content-between w-100"
-                                type="button" id="panchayatDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span id="panchayat-selected-label">
-                                    {% if form.panchayat.value %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <!-- Custom Panchayat Dropdown -->
+                <div class="relative">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Panchayat</label>
+                    <div class="relative">
+                        <button class="w-full bg-slate-50 dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-left font-medium text-slate-800 dark:text-slate-200 flex items-center justify-between transition"
+                            type="button" id="panchayatDropdownBtn" onclick="toggleDropdown('panchayatDropdownMenu')">
+                            <span id="panchayat-selected-label">
+                                {% if form.panchayat.value %}
                                     {% for p in panchayats %}
-                                    {% if p.id|stringformat:"s" == form.panchayat.value|stringformat:"s" or p.id|stringformat:"s" == form.panchayat.value.id|stringformat:"s" %}
-                                    {{ p.name }}
-                                    {% endif %}
+                                        {% if p.id|stringformat:"s" == form.panchayat.value|stringformat:"s" or p.id|stringformat:"s" == form.panchayat.value.id|stringformat:"s" %}
+                                            {{ p.name }}
+                                        {% endif %}
                                     {% endfor %}
-                                    {% else %}
+                                {% else %}
                                     Select Panchayat
-                                    {% endif %}
-                                </span>
-                                <i class="bi bi-chevron-down ms-2"></i>
-                            </button>
-                            <div class="dropdown-menu lsg-dropdown-menu w-100" aria-labelledby="panchayatDropdownBtn">
-                                <div class="px-3 py-2 border-bottom sticky-top bg-white">
-                                    <input type="text" class="lsg-input py-1 px-2" style="font-size: 0.85rem;"
-                                        placeholder="Search panchayat..." id="panchayat-search-input"
-                                        autocomplete="off">
-                                </div>
-                                <div id="panchayat-items-list">
-                                    {% for p in panchayats %}
-                                    <button class="dropdown-item lsg-dropdown-item panchayat-option" type="button"
+                                {% endif %}
+                            </span>
+                            <i class="bi bi-chevron-down text-slate-400"></i>
+                        </button>
+                        <div id="panchayatDropdownMenu" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 max-h-56 overflow-y-auto p-2">
+                            <div class="sticky top-0 bg-white dark:bg-slate-800 pb-2 mb-1 border-b border-slate-100 dark:border-slate-700/80">
+                                <input type="text" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
+                                    placeholder="Search panchayat..." id="panchayat-search-input" autocomplete="off">
+                            </div>
+                            <div id="panchayat-items-list" class="space-y-0.5">
+                                {% for p in panchayats %}
+                                    <button class="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition panchayat-option" type="button"
                                         data-value="{{ p.id }}">{{ p.name }}</button>
-                                    {% endfor %}
-                                </div>
+                                {% endfor %}
                             </div>
                         </div>
-                        {{ form.panchayat }}
-                        {% if form.panchayat.errors %}
-                        <div class="text-danger small mt-1">{% for error in form.panchayat.errors %}{{ error }}{% endfor %}</div>
-                        {% endif %}
                     </div>
+                    <div class="hidden">{{ form.panchayat }}</div>
+                    {% if form.panchayat.errors %}
+                        <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.panchayat.errors %}{{ error }}{% endfor %}</p>
+                    {% endif %}
+                </div>
 
-                    <!-- Custom Ward Dropdown -->
-                    <div class="col-md-6 mb-3">
-                        <label class="lsg-label">Ward </label>
-                        <div class="dropdown w-100">
-                            <button class="lsg-dropdown-trigger d-flex align-items-center justify-content-between w-100"
-                                type="button" id="wardDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span id="ward-selected-label">
-                                    {% if form.ward.value %}
+                <!-- Custom Ward Dropdown -->
+                <div class="relative">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Ward</label>
+                    <div class="relative">
+                        <button class="w-full bg-slate-50 dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-left font-medium text-slate-800 dark:text-slate-200 flex items-center justify-between transition"
+                            type="button" id="wardDropdownBtn" onclick="toggleDropdown('wardDropdownMenu')">
+                            <span id="ward-selected-label">
+                                {% if form.ward.value %}
                                     {% for w in wards %}
-                                    {% if w.id|stringformat:"s" == form.ward.value|stringformat:"s" or w.id|stringformat:"s" == form.ward.value.id|stringformat:"s" %}
-                                    Ward {{ w.number }}{% if w.name %} - {{ w.name }}{% endif %}
-                                    {% endif %}
+                                        {% if w.id|stringformat:"s" == form.ward.value|stringformat:"s" or w.id|stringformat:"s" == form.ward.value.id|stringformat:"s" %}
+                                            Ward {{ w.number }}{% if w.name %} - {{ w.name }}{% endif %}
+                                        {% endif %}
                                     {% endfor %}
-                                    {% else %}
+                                {% else %}
                                     Select Ward
-                                    {% endif %}
-                                </span>
-                                <i class="bi bi-chevron-down ms-2"></i>
-                            </button>
-                            <div class="dropdown-menu lsg-dropdown-menu w-100" aria-labelledby="wardDropdownBtn">
-                                <div class="px-3 py-2 border-bottom sticky-top bg-white">
-                                    <input type="text" class="lsg-input py-1 px-2" style="font-size: 0.85rem;"
-                                        placeholder="Search ward..." id="ward-search-input" autocomplete="off">
-                                </div>
-                                <div id="ward-items-list">
-                                    {% for w in wards %}
-                                    <button class="dropdown-item lsg-dropdown-item ward-option" type="button"
+                                {% endif %}
+                            </span>
+                            <i class="bi bi-chevron-down text-slate-400"></i>
+                        </button>
+                        <div id="wardDropdownMenu" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-30 max-h-56 overflow-y-auto p-2">
+                            <div class="sticky top-0 bg-white dark:bg-slate-800 pb-2 mb-1 border-b border-slate-100 dark:border-slate-700/80">
+                                <input type="text" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
+                                    placeholder="Search ward..." id="ward-search-input" autocomplete="off">
+                            </div>
+                            <div id="ward-items-list" class="space-y-0.5">
+                                {% for w in wards %}
+                                    <button class="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition ward-option" type="button"
                                         data-value="{{ w.id }}" data-panchayat-id="{{ w.panchayat.id }}">
                                         Ward {{ w.number }}{% if w.name %} - {{ w.name }}{% endif %}
                                     </button>
-                                    {% endfor %}
-                                </div>
+                                {% endfor %}
                             </div>
                         </div>
-                        {{ form.ward }}
-                        {% if form.ward.errors %}
-                        <div class="text-danger small mt-1">{% for error in form.ward.errors %}{{ error }}{% endfor %}</div>
-                        {% endif %}
                     </div>
+                    <div class="hidden">{{ form.ward }}</div>
+                    {% if form.ward.errors %}
+                        <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.ward.errors %}{{ error }}{% endfor %}</p>
+                    {% endif %}
                 </div>
-
-                <div class="row">
-                    <!-- Password Field -->
-                    <div class="col-md-6 mb-3">
-                        <label for="{{ form.password.id_for_label }}" class="lsg-label">Password </label>
-                        {{ form.password }}
-                        {% if form.password.errors %}
-                        <div class="text-danger small mt-1">{% for error in form.password.errors %}{{ error }}{% endfor %}</div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Confirm Password Field -->
-                    <div class="col-md-6 mb-3">
-                        <label for="{{ form.confirm_password.id_for_label }}" class="lsg-label">Confirm Password
-                        </label>
-                        {{ form.confirm_password }}
-                        {% if form.confirm_password.errors %}
-                        <div class="text-danger small mt-1">{% for error in form.confirm_password.errors %}{{ error }}{% endfor %}</div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <button type="submit" class="lsg-btn-primary w-100 mt-3 py-2">
-                    <i class="bi bi-person-check-fill me-2"></i>Sign Up
-                </button>
-            </form>
-
-            <div class="text-center mt-4">
-                <span class="text-secondary">Already have an account?</span>
-                <a href="{% url 'login' %}" class="text-decoration-none fw-bold ms-1">Login here</a>
             </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <!-- Password Field -->
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.password.errors %}{{ error }}{% endfor %}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div>
+                    <label for="{{ form.confirm_password.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Confirm Password</label>
+                    {{ form.confirm_password }}
+                    {% if form.confirm_password.errors %}
+                        <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.confirm_password.errors %}{{ error }}{% endfor %}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="w-full mt-4 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-md shadow-indigo-200 dark:shadow-none transition flex items-center justify-center gap-2">
+                <i class="bi bi-person-check-fill"></i>
+                <span>Sign Up</span>
+            </button>
+        </form>
+
+        <div class="text-center mt-6 pt-5 border-t border-slate-100 dark:border-slate-700/80 text-xs text-slate-500 dark:text-slate-400">
+            <span>Already have an account?</span>
+            <a href="{% url 'login' %}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline ms-1 transition">Login here</a>
         </div>
     </div>
 </div>
@@ -192,6 +191,22 @@
 
 {% block extra_js %}
 <script>
+    function toggleDropdown(id) {
+        const menu = document.getElementById(id);
+        const allMenus = document.querySelectorAll('#panchayatDropdownMenu, #wardDropdownMenu');
+        allMenus.forEach(m => {
+            if (m.id !== id) m.classList.add('hidden');
+        });
+        menu.classList.toggle('hidden');
+    }
+
+    document.addEventListener("click", function (e) {
+        if (!e.target.closest('#panchayatDropdownBtn') && !e.target.closest('#panchayatDropdownMenu') &&
+            !e.target.closest('#wardDropdownBtn') && !e.target.closest('#wardDropdownMenu')) {
+            document.querySelectorAll('#panchayatDropdownMenu, #wardDropdownMenu').forEach(m => m.classList.add('hidden'));
+        }
+    });
+
     document.addEventListener("DOMContentLoaded", function () {
         const panchayatInput = document.getElementById("id_panchayat");
         const wardInput = document.getElementById("id_ward");
@@ -258,7 +273,7 @@
             opt.addEventListener("click", function () {
                 panchayatInput.value = opt.getAttribute("data-value");
                 panchayatLabel.textContent = opt.textContent.trim();
-
+                document.getElementById("panchayatDropdownMenu").classList.add('hidden');
                 // Re-filter Wards
                 filterWards(false);
             });
@@ -269,6 +284,7 @@
             opt.addEventListener("click", function () {
                 wardInput.value = opt.getAttribute("data-value");
                 wardLabel.textContent = opt.textContent.trim();
+                document.getElementById("wardDropdownMenu").classList.add('hidden');
             });
         });
 

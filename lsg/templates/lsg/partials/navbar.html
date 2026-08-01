@@ -1,42 +1,44 @@
-<nav class="navbar navbar-expand-lg custom-navbar sticky-top">
-    <div class="container">
-        <a class="navbar-brand" href="{% url 'dashboard' %}">
-            <i class="bi bi-geo-alt-fill me-1"></i>LSG Portal
-        </a>
-        
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        
-        <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
-            <ul class="navbar-nav align-items-center">
+<header id="main-navbar" class="fixed top-0 left-0 right-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <!-- Brand / Logo -->
+            <a href="{% url 'dashboard' %}" class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition font-bold text-xl tracking-tight">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100 dark:border-indigo-900/60">
+                    <i class="bi bi-geo-alt-fill text-lg"></i>
+                </span>
+                <span>LSG Portal</span>
+            </a>
+            
+            <!-- Right Actions: Theme Toggle & Auth Links -->
+            <div class="flex items-center gap-2.5">
+                <!-- Theme Toggle Button -->
+                <button type="button" onclick="toggleDarkMode()" class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 transition cursor-pointer" title="Toggle Theme">
+                    <i class="bi bi-moon-stars-fill text-sm theme-toggle-icon text-indigo-500"></i>
+                    <span class="hidden sm:inline theme-toggle-text">Dark Mode</span>
+                </button>
+
                 {% if user.is_authenticated %}
-                    <li class="nav-item me-3">
-                        <span class="text-secondary small">Logged in as: <strong>{{ user.name|default:user.username }}</strong></span>
-                    </li>
-                    <li class="nav-item me-2">
-                        <a class="lsg-btn-outline py-1 px-3 me-2" style="font-size: 0.85rem;" href="{% url 'profile' %}">
-                            <i class="bi bi-person-fill me-1"></i>Profile
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="lsg-btn-danger py-1 px-3" style="font-size: 0.85rem;" href="{% url 'logout' %}">
-                            <i class="bi bi-box-arrow-right me-1"></i>Logout
-                        </a>
-                    </li>
+                    <a href="{% url 'profile' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 transition">
+                        <i class="bi bi-person-fill text-slate-500 dark:text-slate-400"></i>
+                        <span>Profile</span>
+                    </a>
+                    
+                    <a href="{% url 'logout' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100/80 dark:hover:bg-rose-900/60 border border-rose-200/60 dark:border-rose-900/60 transition">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </a>
                 {% else %}
-                    <li class="nav-item me-2">
-                        <a class="lsg-btn-outline py-1 px-3 me-2" style="font-size: 0.85rem;" href="{% url 'login' %}">
-                            <i class="bi bi-box-arrow-in-right me-1"></i>Login
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="lsg-btn-primary py-1 px-3 text-white" style="font-size: 0.85rem;" href="{% url 'register' %}">
-                            <i class="bi bi-person-plus-fill me-1"></i>Register
-                        </a>
-                    </li>
+                    <a href="{% url 'login' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 transition">
+                        <i class="bi bi-box-arrow-in-right text-slate-500 dark:text-slate-400"></i>
+                        <span>Login</span>
+                    </a>
+                    
+                    <a href="{% url 'register' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-200 dark:shadow-none transition">
+                        <i class="bi bi-person-plus-fill"></i>
+                        <span>Register</span>
+                    </a>
                 {% endif %}
-            </ul>
+            </div>
         </div>
     </div>
-</nav>
+</header>

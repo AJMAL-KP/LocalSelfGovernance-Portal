@@ -3,8 +3,7 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
-from django.contrib.auth.forms import PasswordChangeForm
-from lsg.forms.auth import RegistrationForm, LoginForm, UserProfileForm, EmailChangeForm
+from lsg.forms.auth import RegistrationForm, LoginForm, UserProfileForm, EmailChangeForm, CustomPasswordChangeForm
 from lsg.models import User, Role, Panchayat, Ward
 
 # We import get_ward_members lazily or dynamically to avoid circular import issues if any,
@@ -54,6 +53,9 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+from lsg.views.content import get_ward_members, can_user_manage_post
+from django.utils import timezone
+
 @login_required(login_url='login')
 @never_cache
 def profile_view(request):
@@ -89,10 +91,15 @@ def profile_view(request):
             else:
                 show_edit_modal = True
 
+    user_posts = user.posts.all().order_by('-created_at')
+    for post in user_posts:
+        post.can_manage = can_user_manage_post(user, post)
+
     return render(request, 'lsg/auth/profile.html', {
         'user': user,
         'profile_form': form,
         'show_edit_modal': show_edit_modal,
+        'user_posts': user_posts,
         'ward_members': get_ward_members(user)
     })
 
@@ -115,7 +122,7 @@ def settings_view(request):
         if action == 'change_email':
             active_form = 'email'
             email_form = EmailChangeForm(request.POST, instance=user)
-            password_form = PasswordChangeForm(user=user)
+            password_form = CustomPasswordChangeForm(user=user)
             if email_form.is_valid():
                 new_user = email_form.save(commit=False)
                 new_user.username = new_user.email
@@ -125,21 +132,19 @@ def settings_view(request):
                 
         elif action == 'change_password':
             active_form = 'password'
-            password_form = PasswordChangeForm(user=user, data=request.POST)
+            password_form = CustomPasswordChangeForm(user=user, data=request.POST)
             if password_form.is_valid():
-                updated_user = password_form.save()
+                updated_user = password_form.save(commit=False)
+                updated_user.password_changed_at = timezone.now()
+                updated_user.save()
                 update_session_auth_hash(request, updated_user)
                 messages.success(request, "Password changed successfully.")
                 return redirect('settings')
             # If invalid, email_form needs to be re-initialized
             email_form = EmailChangeForm(instance=user)
     else:
-        password_form = PasswordChangeForm(user=user)
+        password_form = CustomPasswordChangeForm(user=user)
         
-    # Inject styling classes for PasswordChangeForm fields
-    for field in password_form.fields.values():
-        field.widget.attrs.update({'class': 'lsg-input'})
-
     return render(request, 'lsg/auth/settings.html', {
         'user': user,
         'email_form': email_form,

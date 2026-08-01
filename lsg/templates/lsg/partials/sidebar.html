@@ -1,25 +1,53 @@
-<div class="sidebar-nav">
-    <a href="{% url 'posts' %}" class="{% if active_page == 'posts' %}active{% endif %}">
-        <i class="bi bi-card-text"></i>Posts
+<nav class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-3 shadow-sm flex flex-col gap-1">
+    <a href="{% url 'posts' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if active_page == 'posts' %}bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs border border-indigo-100 dark:border-indigo-900/60{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        <i class="bi bi-card-text text-lg"></i>
+        <span>Posts</span>
     </a>
-    <a href="{% url 'complaints' %}" class="{% if active_page == 'complaints' %}active{% endif %}">
-        <i class="bi bi-chat-left-text"></i>Complaints
+    
+    <a href="{% url 'complaints' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if active_page == 'complaints' %}bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs border border-indigo-100 dark:border-indigo-900/60{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        <i class="bi bi-chat-left-text text-lg"></i>
+        <span>Complaints</span>
     </a>
-    <a href="{% url 'documents' %}" class="{% if active_page == 'documents' %}active{% endif %}">
-        <i class="bi bi-file-earmark-text"></i>Documents
+    
+    <a href="{% url 'documents' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if active_page == 'documents' %}bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs border border-indigo-100 dark:border-indigo-900/60{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        <i class="bi bi-file-earmark-text text-lg"></i>
+        <span>Documents</span>
     </a>
-    <a href="{% url 'alerts' %}" class="{% if active_page == 'alerts' or active_page == 'announcements' %}active{% endif %}">
-        <i class="bi bi-megaphone"></i>Announcements
+    
+    <a href="{% url 'alerts' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if active_page == 'alerts' or active_page == 'announcements' %}bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs border border-indigo-100 dark:border-indigo-900/60{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        <i class="bi bi-megaphone text-lg"></i>
+        <span>Announcements</span>
     </a>
+    
     {% if user.role == 'PANCHAYAT_ADMIN' %}
-    <a href="{% url 'manage_users' %}" class="{% if active_page == 'manage_users' %}active{% endif %}">
-        <i class="bi bi-people"></i>Manage Users
+    <a href="{% url 'manage_users' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if active_page == 'manage_users' %}bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs border border-indigo-100 dark:border-indigo-900/60{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        <i class="bi bi-people text-lg"></i>
+        <span>Manage Users</span>
     </a>
     {% endif %}
-    <a href="{% url 'profile' %}" class="{% if active_page == 'profile' %}active{% endif %}">
-        <i class="bi bi-person-circle"></i>Profile
+    
+    <a href="{% url 'profile' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if active_page == 'profile' %}bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs border border-indigo-100 dark:border-indigo-900/60{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        <i class="bi bi-person-circle text-lg"></i>
+        <span>Profile</span>
     </a>
-    <a href="{% url 'settings' %}" class="{% if active_page == 'settings' %}active{% endif %}">
-        <i class="bi bi-gear"></i>Settings
+    
+    <a href="{% url 'settings' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition {% if active_page == 'settings' %}bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs border border-indigo-100 dark:border-indigo-900/60{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white{% endif %}">
+        <i class="bi bi-gear text-lg"></i>
+        <span>Settings</span>
     </a>
-</div>
+
+    <!-- Theme Toggle Option above Logout -->
+    <div class="pt-2 mt-1 border-t border-slate-100 dark:border-slate-700/80 space-y-1">
+        <button type="button" onclick="toggleDarkMode()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition cursor-pointer">
+            <i class="bi bi-moon-stars-fill text-lg theme-toggle-icon text-indigo-500"></i>
+            <span class="theme-toggle-text">Dark Mode</span>
+        </button>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">
+                <i class="bi bi-box-arrow-right text-lg"></i>
+                <span>Logout</span>
+            </a>
+        {% endif %}
+    </div>
+</nav>

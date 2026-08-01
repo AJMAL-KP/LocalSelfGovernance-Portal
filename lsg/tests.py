@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-from .models import Taluk, Panchayat, Ward, User, Role
+from .models import Taluk, Panchayat, Ward, User, Role, Post, PostScope
 from lsg.forms.auth import RegistrationForm, LoginForm
 
 class AuthenticationTests(TestCase):
@@ -468,4 +468,253 @@ class ProfileAndSettingsTests(TestCase):
         from django.contrib.auth import authenticate
         authenticated_user = authenticate(username=self.user.username, password='newsecurepassword123')
         self.assertIsNotNone(authenticated_user)
+
+
+class PostManagementTests(TestCase):
+
+    def setUp(self):
+        # Setup Taluk, Panchayat A & B
+        self.taluk = Taluk.objects.create(name="Central Taluk")
+        
+        self.panchayat_a = Panchayat.objects.create(name="Panchayat A", taluk=self.taluk)
+        self.panchayat_b = Panchayat.objects.create(name="Panchayat B", taluk=self.taluk)
+        
+        # Setup Wards under Panchayat A
+        self.ward_a1 = Ward.objects.create(number=1, name="Ward A1", panchayat=self.panchayat_a)
+        self.ward_a2 = Ward.objects.create(number=2, name="Ward A2", panchayat=self.panchayat_a)
+        
+        # Setup Users
+        self.villager_a1 = User.objects.create_user(
+            username='villager_a1@example.com',
+            email='villager_a1@example.com',
+            password='password123',
+            name='Villager A1',
+            role=Role.VILLAGER,
+            panchayat=self.panchayat_a,
+            ward=self.ward_a1,
+            phone='9876543210',
+            aadhar_id='111111111111',
+            age=25
+        )
+        self.ward_member_a1 = User.objects.create_user(
+            username='member_a1@example.com',
+            email='member_a1@example.com',
+            password='password123',
+            name='Ward Member A1',
+            role=Role.WARD_MEMBER,
+            panchayat=self.panchayat_a,
+            ward=self.ward_a1,
+            phone='9876543211',
+            aadhar_id='222222222222',
+            age=30
+        )
+        self.ward_member_a2 = User.objects.create_user(
+            username='member_a2@example.com',
+            email='member_a2@example.com',
+            password='password123',
+            name='Ward Member A2',
+            role=Role.WARD_MEMBER,
+            panchayat=self.panchayat_a,
+            ward=self.ward_a2,
+            phone='9876543212',
+            aadhar_id='333333333333',
+            age=35
+        )
+        self.panchayat_admin_a = User.objects.create_user(
+            username='admin_a@example.com',
+            email='admin_a@example.com',
+            password='password123',
+            name='Admin A',
+            role=Role.PANCHAYAT_ADMIN,
+            panchayat=self.panchayat_a,
+            phone='9876543213',
+            aadhar_id='444444444444',
+            age=40
+        )
+        self.panchayat_admin_a_other = User.objects.create_user(
+            username='admin_a_other@example.com',
+            email='admin_a_other@example.com',
+            password='password123',
+            name='Admin A Other',
+            role=Role.PANCHAYAT_ADMIN,
+            panchayat=self.panchayat_a,
+            phone='9876543214',
+            aadhar_id='555555555555',
+            age=45
+        )
+        
+        # Create Scoped Posts
+        self.post_panchayat_a = Post.objects.create(
+            author=self.panchayat_admin_a,
+            title="Panchayat A Update",
+            content="General announcement for Panchayat A",
+            scope=PostScope.PANCHAYAT,
+            panchayat=self.panchayat_a
+        )
+        self.post_ward_a1 = Post.objects.create(
+            author=self.ward_member_a1,
+            title="Ward A1 Update",
+            content="Local news for Ward A1",
+            scope=PostScope.WARD,
+            panchayat=self.panchayat_a,
+            ward=self.ward_a1
+        )
+        self.post_ward_a2 = Post.objects.create(
+            author=self.ward_member_a2,
+            title="Ward A2 Update",
+            content="Local news for Ward A2",
+            scope=PostScope.WARD,
+            panchayat=self.panchayat_a,
+            ward=self.ward_a2
+        )
+        self.post_panchayat_b = Post.objects.create(
+            author=self.panchayat_admin_a,
+            title="Panchayat B Update",
+            content="General announcement for Panchayat B",
+            scope=PostScope.PANCHAYAT,
+            panchayat=self.panchayat_b
+        )
+
+    def test_post_feed_visibility(self):
+        # 1. Villager of Panchayat A Ward 1 should see:
+        # - Panchayat A Update
+        # - Ward A1 Update
+        # But NOT:
+        # - Ward A2 Update
+        # - Panchayat B Update
+        self.client.force_login(self.villager_a1)
+        response = self.client.get(reverse('posts'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.post_panchayat_a.title)
+        self.assertContains(response, self.post_ward_a1.title)
+        self.assertNotContains(response, self.post_ward_a2.title)
+        self.assertNotContains(response, self.post_panchayat_b.title)
+
+    def test_villager_cannot_create_or_manage_posts(self):
+        self.client.force_login(self.villager_a1)
+        
+        # Cannot access create view
+        response = self.client.get(reverse('create_post'))
+        self.assertRedirects(response, reverse('posts'))
+        
+        # Cannot POST to create view
+        create_data = {'title': 'Villager Post', 'content': 'Hello'}
+        response = self.client.post(reverse('create_post'), data=create_data)
+        self.assertRedirects(response, reverse('posts'))
+        self.assertEqual(Post.objects.filter(title='Villager Post').count(), 0)
+
+        # Cannot edit posts
+        edit_data = {'title': 'Hacked Title', 'content': 'Hacked content'}
+        response = self.client.post(reverse('edit_post', args=[self.post_panchayat_a.id]), data=edit_data)
+        self.assertRedirects(response, reverse('posts'))
+        self.post_panchayat_a.refresh_from_db()
+        self.assertNotEqual(self.post_panchayat_a.title, 'Hacked Title')
+
+        # Cannot delete posts
+        response = self.client.post(reverse('delete_post', args=[self.post_panchayat_a.id]))
+        self.assertRedirects(response, reverse('posts'))
+        self.assertTrue(Post.objects.filter(id=self.post_panchayat_a.id).exists())
+
+    def test_ward_member_crud(self):
+        self.client.force_login(self.ward_member_a1)
+        
+        # Can access create view
+        response = self.client.get(reverse('create_post'))
+        self.assertEqual(response.status_code, 200)
+        
+        # Can create Ward-level post successfully
+        create_data = {'title': 'New Ward Post', 'content': 'Important ward announcement'}
+        response = self.client.post(reverse('create_post'), data=create_data)
+        self.assertRedirects(response, reverse('posts'))
+        
+        new_post = Post.objects.get(title='New Ward Post')
+        self.assertEqual(new_post.scope, PostScope.WARD)
+        self.assertEqual(new_post.ward, self.ward_a1)
+        self.assertEqual(new_post.panchayat, self.panchayat_a)
+        
+        # Can edit own post
+        edit_data = {'title': 'Updated Ward Post', 'content': 'Important ward announcement (updated)'}
+        response = self.client.post(reverse('edit_post', args=[new_post.id]), data=edit_data)
+        self.assertRedirects(response, reverse('posts'))
+        new_post.refresh_from_db()
+        self.assertEqual(new_post.title, 'Updated Ward Post')
+        
+        # Cannot edit other Ward Member's post
+        response = self.client.post(reverse('edit_post', args=[self.post_ward_a2.id]), data={'title': 'Hacked'})
+        self.assertRedirects(response, reverse('posts'))
+        self.post_ward_a2.refresh_from_db()
+        self.assertNotEqual(self.post_ward_a2.title, 'Hacked')
+
+        # Cannot delete other Ward Member's post
+        response = self.client.post(reverse('delete_post', args=[self.post_ward_a2.id]))
+        self.assertRedirects(response, reverse('posts'))
+        self.assertTrue(Post.objects.filter(id=self.post_ward_a2.id).exists())
+        
+        # Can delete own post
+        response = self.client.post(reverse('delete_post', args=[new_post.id]))
+        self.assertRedirects(response, reverse('posts'))
+        self.assertFalse(Post.objects.filter(id=new_post.id).exists())
+
+    def test_panchayat_admin_crud(self):
+        self.client.force_login(self.panchayat_admin_a)
+        
+        # Can create Panchayat-level post successfully
+        create_data = {'title': 'New Panchayat Post', 'content': 'Important panchayat announcement'}
+        response = self.client.post(reverse('create_post'), data=create_data)
+        self.assertRedirects(response, reverse('posts'))
+        
+        new_post = Post.objects.get(title='New Panchayat Post')
+        self.assertEqual(new_post.scope, PostScope.PANCHAYAT)
+        self.assertIsNone(new_post.ward)
+        self.assertEqual(new_post.panchayat, self.panchayat_a)
+        
+        # Can edit own post
+        edit_data = {'title': 'Updated Panchayat Post', 'content': 'Announcement content'}
+        response = self.client.post(reverse('edit_post', args=[new_post.id]), data=edit_data)
+        self.assertRedirects(response, reverse('posts'))
+        new_post.refresh_from_db()
+        self.assertEqual(new_post.title, 'Updated Panchayat Post')
+        
+        # Can edit another Admin's Panchayat post in same Panchayat
+        other_admin_post = self.post_panchayat_a # created by panchayat_admin_a
+        self.client.force_login(self.panchayat_admin_a_other)
+        edit_data_other = {'title': 'Admin override', 'content': 'Overriding'}
+        response = self.client.post(reverse('edit_post', args=[other_admin_post.id]), data=edit_data_other)
+        self.assertRedirects(response, reverse('posts'))
+        other_admin_post.refresh_from_db()
+        self.assertEqual(other_admin_post.title, 'Admin override')
+
+        # Cannot edit Ward-level posts
+        response = self.client.post(reverse('edit_post', args=[self.post_ward_a1.id]), data={'title': 'Hacked'})
+        self.assertRedirects(response, reverse('posts'))
+        self.post_ward_a1.refresh_from_db()
+        self.assertNotEqual(self.post_ward_a1.title, 'Hacked')
+
+    def test_post_creation_with_image(self):
+        self.client.force_login(self.panchayat_admin_a)
+        
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00'
+            b'\x01\x00\x01\x00\x00\x02\x02\x4c\x01\x00\x3b'
+        )
+        mock_image = SimpleUploadedFile('test_image.gif', small_gif, content_type='image/gif')
+        
+        create_data = {
+            'title': 'Post with Image',
+            'content': 'Check out this cool image',
+            'image': mock_image
+        }
+        response = self.client.post(reverse('create_post'), data=create_data)
+        self.assertRedirects(response, reverse('posts'))
+        
+        new_post = Post.objects.get(title='Post with Image')
+        self.assertTrue(new_post.image.name.startswith('post_images/test_image'))
+        
+        import os
+        if new_post.image and os.path.exists(new_post.image.path):
+            os.remove(new_post.image.path)
+
+
 

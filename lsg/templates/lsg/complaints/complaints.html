@@ -3,52 +3,56 @@
 {% block title %}Complaints - LSG Portal{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
     
-    <!-- Left Column: Sidebar Navigation -->
-    <aside>
+    <!-- Left Column: Fixed Sidebar Navigation -->
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
         {% include 'lsg/partials/sidebar.html' with active_page='complaints' %}
     </aside>
 
     <!-- Center Column: Main Content -->
-    <main>
-        <div class="custom-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="fw-bold text-primary mb-0">
-                    <i class="bi bi-chat-left-text me-2"></i>Grievance & Complaints Redressal
-                </h4>
+    <main class="lg:col-span-6 space-y-6 min-w-0">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-5">
+            <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700/80">
+                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                    <i class="bi bi-chat-left-text text-indigo-600 dark:text-indigo-400"></i>
+                    <span>Grievance & Complaint Portal</span>
+                </h3>
                 
-                {% if user.role == 'VILLAGER' %}
-                    <button class="lsg-btn-primary py-1 px-3" style="font-size: 0.85rem;" disabled>
-                        <i class="bi bi-plus-circle me-1"></i>File Complaint
-                    </button>
-                {% endif %}
+                <button class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 opacity-60 cursor-not-allowed border border-indigo-100 dark:border-indigo-900/60" disabled>
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Lodge Complaint</span>
+                </button>
             </div>
 
             <!-- Role explanation -->
-            <div class="mb-4 text-secondary small bg-light p-3 rounded border">
-                <i class="bi bi-shield-exclamation text-warning me-1"></i>
-                {% if user.role == 'VILLAGER' %}
-                    Report civic issues directly to your Ward Member or Panchayat Admin. You will be able to track resolution status here.
-                {% elif user.role == 'WARD_MEMBER' %}
-                    Review, assign progress status, and mark grievances resolved for villagers in <strong>Ward {{ user.ward.number }}</strong>.
-                {% elif user.role == 'PANCHAYAT_ADMIN' %}
-                    Monitor and oversee the status of all complaints logged across all Wards under <strong>{{ user.panchayat.name }}</strong>.
-                {% endif %}
+            <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 text-indigo-900 dark:text-indigo-300 text-xs flex items-start gap-3">
+                <i class="bi bi-info-circle text-indigo-600 dark:text-indigo-400 text-base shrink-0"></i>
+                <div>
+                    {% if user.role == 'VILLAGER' %}
+                        Track your submitted civic issues and report new ward level complaints directly to elected representatives.
+                    {% elif user.role == 'WARD_MEMBER' %}
+                        Review and resolve public grievances filed by residents of <strong>Ward {{ user.ward.number }}</strong>.
+                    {% elif user.role == 'PANCHAYAT_ADMIN' %}
+                        Oversee and manage high-level civic complaints for <strong>{{ user.panchayat.name }}</strong>.
+                    {% endif %}
+                </div>
             </div>
 
-            <div class="border-dashed text-center py-5">
-                <i class="bi bi-journal-check text-secondary mb-3 display-4"></i>
-                <h5 class="fw-bold text-secondary">No Active Complaints</h5>
-                <p class="text-secondary small max-width-md mx-auto mb-0 px-3">
-                    There are no recorded grievances or active complaints listed for your area at this time.
+            <div class="bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center space-y-3">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-400 text-3xl">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+                <h4 class="font-bold text-slate-700 dark:text-slate-200 text-base">No Complaints Found</h4>
+                <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                    There are no recorded grievances or active issue tickets in your queue.
                 </p>
             </div>
         </div>
     </main>
 
-    <!-- Right Column: Ward Members of User's Panchayat -->
-    <aside>
+    <!-- Right Column: Fixed Ward Members Sidebar -->
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
         {% include 'lsg/partials/ward_members_sidebar.html' %}
     </aside>
 

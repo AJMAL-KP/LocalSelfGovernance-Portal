@@ -3,178 +3,370 @@
 {% block title %}Profile - LSG Portal{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
     
-    <!-- Left Column: Sidebar Navigation -->
-    <aside>
+    <!-- Left Column: Fixed Sidebar Navigation -->
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
         {% include 'lsg/partials/sidebar.html' with active_page='profile' %}
     </aside>
 
-    <!-- Center Column: User Profile details -->
-    <main>
-        <div class="custom-card">
-            <!-- Profile Picture Section -->
-            <div class="text-center mb-4 border-bottom pb-4">
-                <div class="position-relative d-inline-block">
-                    {% if user.profile_picture %}
-                        <img src="{{ user.profile_picture.url }}" class="rounded-circle border" style="width: 130px; height: 130px; object-fit: cover;" alt="Profile Picture">
-                    {% else %}
-                        <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle" style="width: 130px; height: 130px; font-size: 3.8rem; font-weight: bold; background: linear-gradient(135deg, var(--accent-color), #2980b9);">
-                            {{ user.name|slice:":1"|upper }}
-                        </div>
-                    {% endif %}
-                </div>
+    <!-- Center Column: Profile Main Content -->
+    <main class="lg:col-span-6 space-y-6 min-w-0">
+        <!-- Main Profile Header Card (Photo, Name, Role) -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm text-center">
+            <div class="relative inline-block mb-3">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" class="w-28 h-28 rounded-full object-cover border-4 border-slate-100 dark:border-slate-700 shadow-md" alt="Profile Picture">
+                {% else %}
+                    <div class="w-28 h-28 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center font-bold text-3xl shadow-md border-4 border-slate-100 dark:border-slate-700">
+                        {{ user.name|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">{{ user.name }}</h2>
+            <div class="mt-1 mb-4">
+                <span class="inline-flex items-center text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 px-3 py-1 rounded-full uppercase tracking-wider">{{ user.get_role_display }}</span>
+            </div>
+            
+            <!-- Profile Image Actions -->
+            <div class="flex items-center justify-center gap-2">
+                <form method="post" enctype="multipart/form-data" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload">
+                    <label for="upload-input" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 cursor-pointer transition">
+                        <i class="bi bi-camera-fill text-slate-500 dark:text-slate-400"></i>
+                        <span>{% if user.profile_picture %}Change Photo{% else %}Upload Photo{% endif %}</span>
+                    </label>
+                    <input type="file" name="profile_picture" id="upload-input" class="hidden" onchange="this.form.submit()" accept="image/*">
+                </form>
                 
-                <h3 class="fw-bold mt-3 mb-1">{{ user.name }}</h3>
-                <div class="mb-3">
-                    <span class="badge-custom fs-6 py-1 px-3">{{ user.get_role_display }}</span>
-                </div>
-                
-                <!-- Profile Image Actions -->
-                <div class="d-flex justify-content-center align-items-center gap-2">
-                    <form method="post" enctype="multipart/form-data" class="m-0">
+                {% if user.profile_picture %}
+                    <form method="post" class="m-0">
                         {% csrf_token %}
-                        <input type="hidden" name="action" value="upload">
-                        <label for="upload-input" class="lsg-btn-outline py-1 px-3" style="font-size: 0.85rem; cursor: pointer; margin: 0;">
-                            <i class="bi bi-camera-fill me-1"></i>{% if user.profile_picture %}Change Photo{% else %}Upload Photo{% endif %}
-                        </label>
-                        <input type="file" name="profile_picture" id="upload-input" class="d-none" onchange="this.form.submit()" accept="image/*">
+                        <input type="hidden" name="action" value="delete">
+                        <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100/80 dark:hover:bg-rose-900/60 border border-rose-200/60 dark:border-rose-900/60 transition">
+                            <i class="bi bi-trash-fill"></i>
+                            <span>Remove</span>
+                        </button>
                     </form>
-                    
-                    {% if user.profile_picture %}
-                        <form method="post" class="m-0">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="delete">
-                            <button type="submit" class="lsg-btn-danger py-1 px-3" style="font-size: 0.85rem; margin: 0;">
-                                <i class="bi bi-trash-fill me-1"></i>Remove
-                            </button>
-                        </form>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Personal details -->
-            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                <h5 class="fw-bold text-primary mb-0">
-                    <i class="bi bi-person-fill me-2"></i>Personal Details
-                </h5>
-                <button type="button" class="lsg-btn-outline py-1 px-3" data-bs-toggle="modal" data-bs-target="#editProfileModal" style="font-size: 0.85rem; margin: 0; padding: 0.4rem 1rem;">
-                    <i class="bi bi-pencil-square me-1"></i>Edit Profile
-                </button>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Full Name</span>
-                <span class="info-val">{{ user.name }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Age</span>
-                <span class="info-val">{{ user.age|default:"Not specified" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Email Address</span>
-                <span class="info-val">{{ user.email }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Phone Number</span>
-                <span class="info-val">{{ user.phone }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Aadhar ID</span>
-                <span class="info-val">{{ user.aadhar_id }}</span>
-            </div>
-
-            <!-- Jurisdiction details -->
-            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3 mt-4">
-                <i class="bi bi-geo-alt-fill me-2"></i>Governance Jurisdiction
-            </h5>
-            <div class="info-row">
-                <span class="info-label">Taluk</span>
-                <span class="info-val">{{ user.panchayat.taluk.name|default:"Not specified" }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Panchayat</span>
-                <span class="info-val">{{ user.panchayat.name }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Ward</span>
-                <span class="info-val">Ward {{ user.ward.number }}{% if user.ward.name %} ({{ user.ward.name }}){% endif %}</span>
+                {% endif %}
             </div>
         </div>
+
+        {% if user.role == 'VILLAGER' %}
+            <!-- Personal Details Card in Center for Villager -->
+            <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/80">
+                    <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+                        <i class="bi bi-person-fill text-indigo-600 dark:text-indigo-400"></i>
+                        <span>Personal Details</span>
+                    </h3>
+                    <button type="button" onclick="document.getElementById('editProfileModal').classList.remove('hidden')" class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/60 transition">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Edit Profile</span>
+                    </button>
+                </div>
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
+                    <div class="py-2.5 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Full Name</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.name }}</span>
+                    </div>
+                    <div class="py-2.5 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Age</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.age|default:"Not specified" }}</span>
+                    </div>
+                    <div class="py-2.5 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Email Address</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.email }}</span>
+                    </div>
+                    <div class="py-2.5 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Phone Number</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.phone }}</span>
+                    </div>
+                    <div class="py-2.5 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Aadhar ID</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.aadhar_id }}</span>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Recent Uploaded Posts Feed for Panchayat Admin & Ward Member -->
+            <div class="space-y-5">
+                <div class="flex items-center justify-between px-1">
+                    <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                        <i class="bi bi-collection-fill text-indigo-600 dark:text-indigo-400"></i>
+                        <span>Recent Uploaded Posts</span>
+                    </h3>
+                    <a href="{% url 'create_post' %}?next=profile" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-md shadow-indigo-200 dark:shadow-none transition">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>New Post</span>
+                    </a>
+                </div>
+
+                {% if user_posts %}
+                    <div class="space-y-5">
+                        {% for post in user_posts %}
+                            <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200">
+                                <!-- Post Header -->
+                                <div class="flex items-start justify-between gap-3 mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <!-- User Profile Image -->
+                                        {% if post.author.profile_picture %}
+                                            <img src="{{ post.author.profile_picture.url }}" class="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-slate-700" alt="Profile Picture">
+                                        {% else %}
+                                            <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center font-bold text-base shadow-sm">
+                                                {{ post.author.name|slice:":1"|upper }}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Author & Time Details -->
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">{{ post.author.name|default:post.author.username }}</h4>
+                                                <span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-700/60">{{ post.author.get_role_display }}</span>
+                                                
+                                                {% if post.scope == 'PANCHAYAT' %}
+                                                    <span class="text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/60 px-2 py-0.5 rounded-md">
+                                                        Panchayat
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/60 px-2 py-0.5 rounded-md">
+                                                        Ward {{ post.ward.number }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            <p class="text-[11px] text-slate-400 dark:text-slate-400 font-medium mt-0.5">
+                                                {{ post.created_at|date:"M d, Y · g:i A" }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <a href="{% url 'edit_post' post.id %}?next=profile" class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition">
+                                            <i class="bi bi-pencil"></i>
+                                            <span>Edit</span>
+                                        </a>
+                                        <button type="button" onclick="document.getElementById('deleteModal{{ post.id }}').classList.remove('hidden')" class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-rose-200/60 dark:border-rose-900/60 transition">
+                                            <i class="bi bi-trash"></i>
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Post Body -->
+                                <div class="space-y-3">
+                                    <h4 class="font-bold text-slate-900 dark:text-slate-100 text-base leading-snug">{{ post.title }}</h4>
+                                    
+                                    {% if post.content|length > 250 %}
+                                        <div class="post-truncated-{{ post.id }}">
+                                            <p class="text-slate-600 dark:text-slate-300 text-xs leading-relaxed whitespace-pre-line inline">{{ post.content|slice:":250" }}...</p>
+                                            <button type="button" class="text-indigo-600 dark:text-indigo-400 font-semibold text-xs hover:underline ms-1 inline" onclick="document.querySelector('.post-truncated-{{ post.id }}').classList.add('hidden'); document.querySelector('.post-full-{{ post.id }}').classList.remove('hidden');">Read More</button>
+                                        </div>
+                                        <div class="post-full-{{ post.id }} hidden">
+                                            <p class="text-slate-600 dark:text-slate-300 text-xs leading-relaxed whitespace-pre-line inline">{{ post.content }}</p>
+                                            <button type="button" class="text-indigo-600 dark:text-indigo-400 font-semibold text-xs hover:underline ms-1 inline" onclick="document.querySelector('.post-full-{{ post.id }}').classList.add('hidden'); document.querySelector('.post-truncated-{{ post.id }}').classList.remove('hidden');">Read Less</button>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-slate-600 dark:text-slate-300 text-xs leading-relaxed whitespace-pre-line">{{ post.content }}</p>
+                                    {% endif %}
+                                    
+                                    {% if post.image %}
+                                        <div class="mt-3 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 bg-slate-100 dark:bg-slate-900 max-h-96">
+                                            <img src="{{ post.image.url }}" class="w-full h-full object-cover" alt="Post Image">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Delete Modal -->
+                            <div id="deleteModal{{ post.id }}" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+                                <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-sm w-full p-6 shadow-2xl space-y-4">
+                                    <div class="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+                                        <span class="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-xl shrink-0">
+                                            <i class="bi bi-exclamation-triangle-fill"></i>
+                                        </span>
+                                        <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base">Delete Post</h3>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        Are you sure you want to delete this post? This action cannot be undone.
+                                    </p>
+                                    <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700 truncate">
+                                        "{{ post.title }}"
+                                    </p>
+                                    <div class="flex items-center justify-end gap-2 pt-2">
+                                        <button type="button" onclick="document.getElementById('deleteModal{{ post.id }}').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition">
+                                            Cancel
+                                        </button>
+                                        <form action="{% url 'delete_post' post.id %}?next=profile" method="post" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm shadow-rose-200 dark:shadow-none transition">
+                                                Yes, Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center space-y-3">
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-400 text-3xl">
+                            <i class="bi bi-chat-square-text"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-700 dark:text-slate-200 text-base">No Uploaded Posts Yet</h4>
+                        <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                            You have not published any posts or announcements yet.
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
     </main>
 
-    <!-- Right Column: Ward Members of User's Panchayat -->
-    <aside>
-        {% include 'lsg/partials/ward_members_sidebar.html' %}
+    <!-- Right Column: Profile Sidebars -->
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto space-y-5">
+        {% if user.role == 'VILLAGER' %}
+            <!-- Governance Jurisdiction Sidebar for Villagers -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-sm space-y-4">
+                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-700/80">
+                    <i class="bi bi-geo-alt-fill text-indigo-600 dark:text-indigo-400"></i>
+                    <span>Governance Jurisdiction</span>
+                </h3>
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
+                    <div class="py-2.5 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Taluk</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.panchayat.taluk.name|default:"Not specified" }}</span>
+                    </div>
+                    <div class="py-2.5 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Panchayat</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.panchayat.name }}</span>
+                    </div>
+                    <div class="py-2.5 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Ward</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">Ward {{ user.ward.number }}{% if user.ward.name %} ({{ user.ward.name }}){% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Personal Details Sidebar Card for Panchayat Admin & Ward Member -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700/80">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center gap-2">
+                        <i class="bi bi-person-fill text-indigo-600 dark:text-indigo-400"></i>
+                        <span>Personal Details</span>
+                    </h3>
+                    <button type="button" onclick="document.getElementById('editProfileModal').classList.remove('hidden')" class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/60 transition">
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Edit</span>
+                    </button>
+                </div>
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
+                    <div class="py-2 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Full Name</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.name }}</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Age</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.age|default:"Not specified" }}</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Email</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[120px]" title="{{ user.email }}">{{ user.email }}</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Phone</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.phone }}</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Aadhar ID</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.aadhar_id }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jurisdiction Sidebar Card for Panchayat Admin & Ward Member -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-sm space-y-4">
+                <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-700/80">
+                    <i class="bi bi-geo-alt-fill text-indigo-600 dark:text-indigo-400"></i>
+                    <span>Governance Jurisdiction</span>
+                </h3>
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
+                    <div class="py-2 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Taluk</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.panchayat.taluk.name|default:"Not specified" }}</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Panchayat</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[120px]" title="{{ user.panchayat.name }}">{{ user.panchayat.name }}</span>
+                    </div>
+                    <div class="py-2 flex justify-between">
+                        <span class="font-medium text-slate-400 dark:text-slate-400">Ward</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">Ward {{ user.ward.number }}</span>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </aside>
 
 </div>
 
-<!-- Edit Profile Modal -->
-<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: var(--card-shadow);">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold text-primary" id="editProfileModalLabel">
-                    <i class="bi bi-person-fill me-2"></i>Edit Profile Details
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="update_profile">
-                <div class="modal-body py-4">
-                    {% if profile_form.errors %}
-                        <div class="alert alert-danger" style="border-radius: 8px; font-size: 0.9rem;">
-                            Please correct the errors below.
-                        </div>
-                    {% endif %}
-                    
-                    <div class="mb-3">
-                        <label for="{{ profile_form.name.id_for_label }}" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Full Name</label>
-                        {{ profile_form.name }}
-                        {% if profile_form.name.errors %}
-                            <div class="text-danger mt-1" style="font-size: 0.8rem;">
-                                {{ profile_form.name.errors.0 }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ profile_form.phone.id_for_label }}" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Phone Number</label>
-                        {{ profile_form.phone }}
-                        {% if profile_form.phone.errors %}
-                            <div class="text-danger mt-1" style="font-size: 0.8rem;">
-                                {{ profile_form.phone.errors.0 }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ profile_form.age.id_for_label }}" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Age</label>
-                        {{ profile_form.age }}
-                        {% if profile_form.age.errors %}
-                            <div class="text-danger mt-1" style="font-size: 0.8rem;">
-                                {{ profile_form.age.errors.0 }}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-secondary py-2 px-4" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 600; font-size: 0.9rem;">Cancel</button>
-                    <button type="submit" class="lsg-btn-primary">Save Changes</button>
-                </div>
-            </form>
+<!-- Edit Profile Modal Overlay -->
+<div id="editProfileModal" class="{% if not show_edit_modal %}hidden{% endif %} fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/80">
+            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                <i class="bi bi-person-fill text-indigo-600 dark:text-indigo-400"></i>
+                <span>Edit Profile Details</span>
+            </h3>
+            <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_profile">
+            
+            {% if profile_form.errors %}
+                <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 text-xs">
+                    Please correct the errors below.
+                </div>
+            {% endif %}
+            
+            <div>
+                <label for="{{ profile_form.name.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
+                {{ profile_form.name }}
+                {% if profile_form.name.errors %}
+                    <p class="text-rose-600 dark:text-rose-400 text-xs mt-1 font-medium">{{ profile_form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="{{ profile_form.phone.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
+                {{ profile_form.phone }}
+                {% if profile_form.phone.errors %}
+                    <p class="text-rose-600 dark:text-rose-400 text-xs mt-1 font-medium">{{ profile_form.phone.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="{{ profile_form.age.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Age</label>
+                {{ profile_form.age }}
+                {% if profile_form.age.errors %}
+                    <p class="text-rose-600 dark:text-rose-400 text-xs mt-1 font-medium">{{ profile_form.age.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/80">
+                <button type="button" onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 dark:shadow-none transition">
+                    Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
-
-{% if show_edit_modal %}
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var myModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
-        myModal.show();
-    });
-</script>
-{% endif %}
 {% endblock %}
 
