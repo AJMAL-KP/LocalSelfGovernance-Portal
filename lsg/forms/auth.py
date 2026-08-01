@@ -176,6 +176,26 @@ class UserProfileForm(forms.ModelForm):
         return phone
 
 
+from django.contrib.auth.forms import PasswordChangeForm
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.help_text = None
+            field.widget.attrs.update({'class': 'lsg-input'})
+            field.widget.attrs.pop('autofocus', None)
+
+    def clean_new_password1(self):
+        new_password = self.cleaned_data.get('new_password1')
+        old_password = self.cleaned_data.get('old_password')
+        if old_password and new_password and old_password == new_password:
+            raise forms.ValidationError("The new password cannot be the same as your current password.")
+        if new_password and self.user and self.user.check_password(new_password):
+            raise forms.ValidationError("The new password cannot be the same as your current password.")
+        return new_password
+
+
 class EmailChangeForm(forms.ModelForm):
     class Meta:
         model = User
@@ -190,6 +210,8 @@ class EmailChangeForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
+        if email and self.instance and email.lower() == self.instance.email.lower():
+            raise forms.ValidationError("The new email address cannot be the same as your current email address.")
         if User.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
             raise forms.ValidationError("A user with this email address already exists.")
         return email

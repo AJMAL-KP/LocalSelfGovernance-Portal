@@ -3,52 +3,58 @@
 {% block title %}Documents - LSG Portal{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
     
-    <!-- Left Column: Sidebar Navigation -->
-    <aside>
+    <!-- Left Column: Fixed Sidebar Navigation -->
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
         {% include 'lsg/partials/sidebar.html' with active_page='documents' %}
     </aside>
 
     <!-- Center Column: Main Content -->
-    <main>
-        <div class="custom-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="fw-bold text-primary mb-0">
-                    <i class="bi bi-file-earmark-text me-2"></i>Official Documents & Schemes
-                </h4>
+    <main class="lg:col-span-6 space-y-6 min-w-0">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-5">
+            <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700/80">
+                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                    <i class="bi bi-file-earmark-text text-indigo-600 dark:text-indigo-400"></i>
+                    <span>Official Documents & Circulars</span>
+                </h3>
                 
                 {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_ADMIN' %}
-                    <button class="lsg-btn-primary py-1 px-3" style="font-size: 0.85rem;" disabled>
-                        <i class="bi bi-upload me-1"></i>Upload Document
+                    <button class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 opacity-60 cursor-not-allowed border border-indigo-100 dark:border-indigo-900/60" disabled>
+                        <i class="bi bi-cloud-upload"></i>
+                        <span>Upload File</span>
                     </button>
                 {% endif %}
             </div>
 
             <!-- Role explanation -->
-            <div class="mb-4 text-secondary small bg-light p-3 rounded border">
-                <i class="bi bi-info-circle text-primary me-1"></i>
-                {% if user.role == 'VILLAGER' %}
-                    Access scheme details, meeting logs, and governance guidelines uploaded for your area.
-                {% elif user.role == 'WARD_MEMBER' %}
-                    Upload and manage official documents for <strong>Ward {{ user.ward.number }}</strong>.
-                {% elif user.role == 'PANCHAYAT_ADMIN' %}
-                    Upload and manage official circulars, development plans, and documents for the <strong>{{ user.panchayat.name }}</strong>.
-                {% endif %}
+            <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 text-indigo-900 dark:text-indigo-300 text-xs flex items-start gap-3">
+                <i class="bi bi-info-circle text-indigo-600 dark:text-indigo-400 text-base shrink-0"></i>
+                <div>
+                    {% if user.role == 'VILLAGER' %}
+                        You can view public notices, certificates, forms, and official circulars published by your Panchayat.
+                    {% elif user.role == 'WARD_MEMBER' %}
+                        You can upload documents and resources visible to villagers in <strong>Ward {{ user.ward.number }}</strong>.
+                    {% elif user.role == 'PANCHAYAT_ADMIN' %}
+                        You can upload and manage official administrative documents for <strong>{{ user.panchayat.name }}</strong>.
+                    {% endif %}
+                </div>
             </div>
 
-            <div class="border-dashed text-center py-5">
-                <i class="bi bi-folder-x text-secondary mb-3 display-4"></i>
-                <h5 class="fw-bold text-secondary">No Documents Available</h5>
-                <p class="text-secondary small max-width-md mx-auto mb-0 px-3">
-                    No official circulars, schemes, or local documents have been shared yet.
+            <div class="bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center space-y-3">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-400 text-3xl">
+                    <i class="bi bi-folder-x"></i>
+                </div>
+                <h4 class="font-bold text-slate-700 dark:text-slate-200 text-base">No Documents Available</h4>
+                <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                    No official public documents or forms have been uploaded for your region yet.
                 </p>
             </div>
         </div>
     </main>
 
-    <!-- Right Column: Ward Members of User's Panchayat -->
-    <aside>
+    <!-- Right Column: Fixed Ward Members Sidebar -->
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
         {% include 'lsg/partials/ward_members_sidebar.html' %}
     </aside>
 

@@ -3,54 +3,58 @@
 {% block title %}Login - LSG Portal{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="custom-card my-5">
-            <h3 class="text-center mb-4 fw-bold text-primary">
-                <i class="bi bi-box-arrow-in-right me-2"></i>Welcome Back
-            </h3>
-            
-            {% if form.non_field_errors %}
-                <div class="lsg-alert-error">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <div>
-                        {% for error in form.non_field_errors %}
-                            <p class="mb-0">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-
-            <form method="post" novalidate>
-                {% csrf_token %}
-                
-                <!-- Email Field -->
-                <div class="mb-3">
-                    <label for="{{ form.email.id_for_label }}" class="lsg-label">Email Address</label>
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                        <div class="text-danger small mt-1">{% for error in form.email.errors %}{{ error }}{% endfor %}</div>
-                    {% endif %}
-                </div>
-                
-                <!-- Password Field -->
-                <div class="mb-4">
-                    <label for="{{ form.password.id_for_label }}" class="lsg-label">Password</label>
-                    {{ form.password }}
-                    {% if form.password.errors %}
-                        <div class="text-danger small mt-1">{% for error in form.password.errors %}{{ error }}{% endfor %}</div>
-                    {% endif %}
-                </div>
-
-                <button type="submit" class="lsg-btn-primary w-100 py-2">
-                    <i class="bi bi-shield-lock-fill me-2"></i>Login
-                </button>
-            </form>
-            
-            <div class="text-center mt-4">
-                <span class="text-secondary">New to LSG Portal?</span>
-                <a href="{% url 'register' %}" class="text-decoration-none fw-bold ms-1">Create an account</a>
+<div class="max-w-md mx-auto my-8 sm:my-12">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-xl dark:shadow-slate-950/50 p-6 sm:p-8 space-y-6">
+        <!-- Title & Icon -->
+        <div class="text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 mb-3 border border-indigo-100 dark:border-indigo-900/60">
+                <i class="bi bi-box-arrow-in-right text-2xl"></i>
             </div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Welcome Back</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Sign in to your local governance account</p>
+        </div>
+        
+        {% if form.non_field_errors %}
+            <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 text-xs flex items-start gap-3">
+                <i class="bi bi-exclamation-triangle-fill text-rose-500 dark:text-rose-400 text-base shrink-0"></i>
+                <div class="space-y-1">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <form method="post" novalidate class="space-y-4">
+            {% csrf_token %}
+            
+            <!-- Email Field -->
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.email.errors %}{{ error }}{% endfor %}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Password Field -->
+            <div>
+                <label for="{{ form.password.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{% for error in form.password.errors %}{{ error }}{% endfor %}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="w-full mt-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-md shadow-indigo-200 dark:shadow-none transition flex items-center justify-center gap-2">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Login</span>
+            </button>
+        </form>
+        
+        <div class="text-center pt-4 border-t border-slate-100 dark:border-slate-700/80 text-xs text-slate-500 dark:text-slate-400">
+            <span>New to LSG Portal?</span>
+            <a href="{% url 'register' %}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline ms-1 transition">Create an account</a>
         </div>
     </div>
 </div>

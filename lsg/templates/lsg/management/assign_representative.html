@@ -3,17 +3,20 @@
 {% block title %}Assign Representative - LSG Portal{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
-    <aside>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <aside class="lg:col-span-3 lg:sticky lg:top-20">
         {% include 'lsg/partials/sidebar.html' with active_page='manage_users' %}
     </aside>
-    <main style="grid-column: span 2;">
-        <div class="custom-card">
-            <h4 class="fw-bold text-primary mb-3">Assign Representative</h4>
-            <div class="border-dashed text-center py-5">
-                <p class="text-secondary mb-0">Placeholder for assigning Ward Members or Panchayat roles.</p>
+    <main class="lg:col-span-6 space-y-6">
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-5">
+            <h3 class="font-bold text-slate-900 text-base border-b border-slate-100 pb-3">Assign Ward Representative</h3>
+            <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
+                <p class="text-xs text-slate-400">Representative assignment panel placeholder.</p>
             </div>
         </div>
     </main>
+    <aside class="lg:col-span-3 lg:sticky lg:top-20">
+        {% include 'lsg/partials/ward_members_sidebar.html' %}
+    </aside>
 </div>
 {% endblock %}

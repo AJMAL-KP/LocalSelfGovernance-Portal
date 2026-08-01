@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django import forms
-from .models import Taluk, Panchayat, Ward, User
+from .models import Taluk, Panchayat, Ward, User, Post
 
 # Forms to properly integrate custom User fields into the Django admin
 class CustomUserCreationForm(UserCreationForm):
@@ -71,3 +71,11 @@ class WardAdmin(admin.ModelAdmin):
     list_display = ('number', 'name', 'panchayat')
     list_filter = ('panchayat',)
     search_fields = ('name', 'number')
+
+
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ('title', 'author', 'scope', 'panchayat', 'ward', 'created_at')
+    list_filter = ('scope', 'panchayat', 'ward')
+    search_fields = ('title', 'content', 'author__username')
+

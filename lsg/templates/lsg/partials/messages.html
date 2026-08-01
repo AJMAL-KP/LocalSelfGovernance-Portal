@@ -1,17 +1,32 @@
 {% if messages %}
-    <div class="messages-container mb-4">
+    <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0">
         {% for message in messages %}
-            {% if message.tags == 'error' %}
-                <div class="lsg-alert-error">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <div>{{ message }}</div>
+            <div class="pointer-events-auto flex items-center justify-between p-4 rounded-2xl shadow-lg border text-sm font-medium transition-all duration-300 transform translate-y-0 opacity-100 {% if message.tags == 'error' %}bg-rose-500 text-white border-rose-600 shadow-rose-200{% else %}bg-indigo-600 text-white border-indigo-700 shadow-indigo-200{% endif %}" role="alert">
+                <div class="flex items-center gap-3">
+                    {% if message.tags == 'error' %}
+                        <i class="bi bi-exclamation-triangle-fill text-lg"></i>
+                    {% else %}
+                        <i class="bi bi-info-circle-fill text-lg"></i>
+                    {% endif %}
+                    <span>{{ message }}</span>
                 </div>
-            {% else %}
-                <div class="lsg-alert-info">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <div>{{ message }}</div>
-                </div>
-            {% endif %}
+                <button type="button" class="text-white/80 hover:text-white transition p-1 text-lg leading-none" onclick="this.closest('[role=alert]').remove();">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
         {% endfor %}
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const alerts = document.querySelectorAll('[role="alert"]');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(10px)';
+                    setTimeout(() => alert.remove(), 300);
+                }, 4000);
+            });
+        });
+    </script>
 {% endif %}

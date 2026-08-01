@@ -76,5 +76,42 @@ class User(AbstractUser):
         related_name='users'
     )
 
+    password_changed_at = models.DateTimeField(null=True, blank=True, verbose_name="Password Last Changed At")
+
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
+
+
+class PostScope(models.TextChoices):
+    WARD = 'WARD', 'Ward'
+    PANCHAYAT = 'PANCHAYAT', 'Panchayat'
+
+
+class Post(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    scope = models.CharField(
+        max_length=20,
+        choices=PostScope.choices,
+        default=PostScope.WARD
+    )
+    panchayat = models.ForeignKey(
+        Panchayat,
+        on_delete=models.CASCADE,
+        related_name='posts'
+    )
+    ward = models.ForeignKey(
+        Ward,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='posts'
+    )
+    image = models.ImageField(upload_to='post_images/', blank=True, null=True, verbose_name="Post Image")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.author.username} ({self.get_scope_display()})"
+

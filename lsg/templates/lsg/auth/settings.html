@@ -3,93 +3,128 @@
 {% block title %}Settings - LSG Portal{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
     
-    <!-- Left Column: Sidebar Navigation -->
-    <aside>
+    <!-- Left Column: Fixed Sidebar Navigation -->
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
         {% include 'lsg/partials/sidebar.html' with active_page='settings' %}
     </aside>
 
     <!-- Center Column: Settings Page -->
-    <main>
+    <main class="lg:col-span-6 space-y-6">
         <!-- Change Email Card -->
-        <div class="custom-card mb-4">
-            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
-                <i class="bi bi-envelope-fill me-2"></i>Change Email Address
-            </h5>
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm pb-3 border-b border-slate-100 dark:border-slate-700/80 flex items-center gap-2">
+                <i class="bi bi-envelope-fill text-indigo-600 dark:text-indigo-400"></i>
+                <span>Change Email Address</span>
+            </h3>
             
-            <form method="post" class="needs-validation">
+            <form method="post" class="space-y-4">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="change_email">
                 
-                <div class="mb-3">
-                    <label for="{{ email_form.email.id_for_label }}" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">New Email Address</label>
+                <div>
+                    <label for="{{ email_form.email.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">New Email Address</label>
                     {{ email_form.email }}
                     {% if active_form == 'email' and email_form.email.errors %}
-                        <div class="text-danger mt-1" style="font-size: 0.85rem;">
-                            {{ email_form.email.errors.0 }}
-                        </div>
+                        <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{{ email_form.email.errors.0 }}</p>
                     {% endif %}
-                    <div class="form-text text-muted mt-2" style="font-size: 0.8rem;">
-                        Note: Changing your email will also change your login username.
-                    </div>
                 </div>
                 
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="lsg-btn-primary py-2 px-4" style="font-size: 0.9rem;">
-                        <i class="bi bi-save me-1"></i>Update Email
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-md shadow-indigo-200 dark:shadow-none transition flex items-center gap-1.5">
+                        <i class="bi bi-save"></i>
+                        <span>Update Email</span>
                     </button>
                 </div>
             </form>
         </div>
 
         <!-- Change Password Card -->
-        <div class="custom-card">
-            <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
-                <i class="bi bi-shield-lock-fill me-2"></i>Change Password
-            </h5>
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm pb-3 border-b border-slate-100 dark:border-slate-700/80 flex items-center gap-2">
+                <i class="bi bi-shield-lock-fill text-indigo-600 dark:text-indigo-400"></i>
+                <span>Change Password</span>
+            </h3>
             
-            <form method="post" class="needs-validation">
+            <form method="post" class="space-y-4">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="change_password">
                 
                 {% if active_form == 'password' and password_form.non_field_errors %}
-                    <div class="alert alert-danger" style="border-radius: 8px; font-size: 0.9rem;">
+                    <div class="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-400 text-xs font-medium">
                         {% for error in password_form.non_field_errors %}
-                            {{ error }}
+                            <p>{{ error }}</p>
                         {% endfor %}
                     </div>
                 {% endif %}
 
                 {% for field in password_form %}
-                    <div class="mb-3">
-                        <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">{{ field.label }}</label>
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{{ field.label }}</label>
                         {{ field }}
-                        {% if field.help_text %}
-                            <div class="form-text text-muted mt-1" style="font-size: 0.8rem;">
-                                {{ field.help_text|safe }}
-                            </div>
-                        {% endif %}
                         {% if active_form == 'password' and field.errors %}
-                            <div class="text-danger mt-1" style="font-size: 0.85rem;">
-                                {{ field.errors.0 }}
-                            </div>
+                            <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 font-medium">{{ field.errors.0 }}</p>
                         {% endif %}
                     </div>
                 {% endfor %}
                 
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="lsg-btn-primary py-2 px-4" style="font-size: 0.9rem;">
-                        <i class="bi bi-key me-1"></i>Change Password
+                <div class="flex justify-end pt-2">
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-md shadow-indigo-200 dark:shadow-none transition flex items-center gap-1.5">
+                        <i class="bi bi-key"></i>
+                        <span>Change Password</span>
                     </button>
                 </div>
             </form>
         </div>
     </main>
 
-    <!-- Right Column: Ward Members of User's Panchayat -->
-    <aside>
-        {% include 'lsg/partials/ward_members_sidebar.html' %}
+    <!-- Right Column: Account Security & Status Sidebar -->
+    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-700/80">
+                <i class="bi bi-shield-check text-emerald-600 dark:text-emerald-400"></i>
+                <span>Security & Status</span>
+            </h3>
+
+            <div class="space-y-3 text-xs">
+                <!-- Email Status -->
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-700/60">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Email Status</span>
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/60 px-2 py-0.5 rounded-md">
+                        <i class="bi bi-check-circle-fill"></i> Verified
+                    </span>
+                </div>
+
+                <!-- Password Protection & Last Changed Date -->
+                <div class="py-1.5 border-b border-slate-100 dark:border-slate-700/60 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Password Status</span>
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 px-2 py-0.5 rounded-md">
+                            <i class="bi bi-lock-fill"></i> Protected
+                        </span>
+                    </div>
+                    <div class="text-[11px] text-slate-400 dark:text-slate-400 font-medium flex items-center justify-between pt-0.5">
+                        <span>Last Changed:</span>
+                        <span class="font-semibold text-slate-700 dark:text-slate-300">
+                            {{ user.password_changed_at|default:user.date_joined|date:"M d, Y" }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- User Role -->
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-700/60">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Account Role</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">{{ user.get_role_display }}</span>
+                </div>
+
+                <!-- Panchayat Jurisdiction -->
+                <div class="flex items-center justify-between py-1.5">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium">Panchayat</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[120px]" title="{{ user.panchayat.name }}">{{ user.panchayat.name }}</span>
+                </div>
+            </div>
+        </div>
     </aside>
 
 </div>
