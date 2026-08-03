@@ -15,12 +15,22 @@ def get_ward_members(user):
         ).order_by('ward__number', 'name')
     return []
 
+def get_panchayat_president(user):
+    if user.is_authenticated and user.panchayat:
+        return User.objects.filter(
+            role=Role.PANCHAYAT_PRESIDENT,
+            panchayat=user.panchayat
+        ).first()
+    return None
+
+get_panchayat_admin = get_panchayat_president
+
 def can_user_manage_post(user, post):
     if not user or not user.is_authenticated:
         return False
     if post.author == user:
         return True
-    if user.role == Role.PANCHAYAT_ADMIN and user.panchayat and post.panchayat == user.panchayat and post.scope == PostScope.PANCHAYAT:
+    if user.role == Role.PANCHAYAT_PRESIDENT and user.panchayat and post.panchayat == user.panchayat and post.scope == PostScope.PANCHAYAT:
         return True
     return False
 
@@ -50,8 +60,8 @@ def posts_list_view(request):
         
     posts = posts.order_by('-created_at')
     
-    # Paginate posts (5 per page)
-    paginator = Paginator(posts, 5)
+    # Paginate posts (20 per page)
+    paginator = Paginator(posts, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -63,6 +73,7 @@ def posts_list_view(request):
         'user': user,
         'posts': page_obj,
         'page_obj': page_obj,
+        'panchayat_president': get_panchayat_president(user),
         'ward_members': get_ward_members(user)
     })
 
@@ -73,7 +84,7 @@ def create_post_view(request):
         return redirect('admin:index')
         
     user = request.user
-    if user.role not in [Role.WARD_MEMBER, Role.PANCHAYAT_ADMIN]:
+    if user.role not in [Role.WARD_MEMBER, Role.PANCHAYAT_PRESIDENT]:
         messages.error(request, "Access Denied: You do not have permission to create posts.")
         return redirect('posts')
         
@@ -81,7 +92,7 @@ def create_post_view(request):
     redirect_target = 'profile' if next_param == 'profile' else 'posts'
 
     if request.method == 'POST':
-        form = PostForm(request.POST, request.FILES)
+        form = PostForm(request.POST, request.FILES, user=user)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = user
@@ -90,13 +101,18 @@ def create_post_view(request):
                 post.scope = PostScope.WARD
                 post.ward = user.ward
             else:
-                post.scope = PostScope.PANCHAYAT
-                post.ward = None
+                # Panchayat President selects scope
+                chosen_scope = form.cleaned_data.get('scope', PostScope.PANCHAYAT)
+                post.scope = chosen_scope
+                if chosen_scope == PostScope.WARD:
+                    post.ward = user.ward
+                else:
+                    post.ward = None
             post.save()
             messages.success(request, "Post created successfully.")
             return redirect(redirect_target)
     else:
-        form = PostForm()
+        form = PostForm(user=user)
         
     return render(request, 'lsg/content/post_form.html', {
         'form': form,
@@ -104,6 +120,7 @@ def create_post_view(request):
         'is_edit': False,
         'next': next_param,
         'active_page': 'profile' if next_param == 'profile' else 'posts',
+        'panchayat_president': get_panchayat_president(user),
         'ward_members': get_ward_members(user)
     })
 
@@ -124,13 +141,21 @@ def edit_post_view(request, post_id):
         return redirect(redirect_target)
 
     if request.method == 'POST':
-        form = PostForm(request.POST, request.FILES, instance=post)
+        form = PostForm(request.POST, request.FILES, instance=post, user=user)
         if form.is_valid():
-            form.save()
+            updated_post = form.save(commit=False)
+            if user.role == Role.PANCHAYAT_PRESIDENT:
+                chosen_scope = form.cleaned_data.get('scope', PostScope.PANCHAYAT)
+                updated_post.scope = chosen_scope
+                if chosen_scope == PostScope.WARD:
+                    updated_post.ward = user.ward
+                else:
+                    updated_post.ward = None
+            updated_post.save()
             messages.success(request, "Post updated successfully.")
             return redirect(redirect_target)
     else:
-        form = PostForm(instance=post)
+        form = PostForm(instance=post, user=user)
         
     return render(request, 'lsg/content/post_form.html', {
         'form': form,
@@ -139,6 +164,7 @@ def edit_post_view(request, post_id):
         'post': post,
         'next': next_param,
         'active_page': 'profile' if next_param == 'profile' else 'posts',
+        'panchayat_president': get_panchayat_president(user),
         'ward_members': get_ward_members(user)
     })
 
@@ -170,6 +196,7 @@ def delete_post_view(request, post_id):
 def alerts_list_view(request):
     return render(request, 'lsg/content/alerts.html', {
         'user': request.user,
+        'panchayat_president': get_panchayat_president(request.user),
         'ward_members': get_ward_members(request.user)
     })
 
@@ -178,6 +205,7 @@ def alerts_list_view(request):
 def documents_list_view(request):
     return render(request, 'lsg/content/documents.html', {
         'user': request.user,
+        'panchayat_president': get_panchayat_president(request.user),
         'ward_members': get_ward_members(request.user)
     })
 

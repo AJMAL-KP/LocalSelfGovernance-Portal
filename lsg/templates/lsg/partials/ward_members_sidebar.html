@@ -1,34 +1,57 @@
-<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-sm">
+<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-sm lg:bg-transparent lg:dark:bg-transparent lg:border-none lg:shadow-none lg:p-0">
     <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base mb-1 flex items-center gap-2">
         <i class="bi bi-people-fill text-indigo-600 dark:text-indigo-400"></i>
-        <span>Ward Members</span>
+        <span>Panchayat Representatives</span>
     </h3>
     <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
         Elected representatives for <strong class="text-slate-700 dark:text-slate-200 font-semibold">{{ user.panchayat.name }}</strong>:
     </p>
     
-    {% if ward_members %}
-        <div class="divide-y divide-slate-100 dark:divide-slate-700/60">
-            {% for member in ward_members %}
-                <div class="py-3 flex items-center gap-3 first:pt-0 last:pb-0">
-                    <div class="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0 text-sm overflow-hidden">
-                        {% if member.profile_picture %}
-                            <img src="{{ member.profile_picture.url }}" class="w-full h-full object-cover" alt="{{ member.name }}">
-                        {% else %}
-                            {{ member.name|slice:":1"|upper }}
-                        {% endif %}
+    <div class="space-y-3">
+        {% if panchayat_president or ward_members %}
+            <div class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                {% if panchayat_president %}
+                    <!-- President listed in the same uniform style -->
+                    <div class="py-2.5 flex items-center gap-3 first:pt-1 last:pb-0">
+                        <div class="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0 text-xs overflow-hidden">
+                            {% if panchayat_president.profile_picture %}
+                                <img src="{{ panchayat_president.profile_picture.url }}" class="w-full h-full object-cover" alt="{{ panchayat_president.name }}">
+                            {% else %}
+                                {{ panchayat_president.name|slice:":1"|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{{ panchayat_president.name }}</h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                                Panchayat President {% if panchayat_president.ward %}(Ward {{ panchayat_president.ward.number }}){% endif %}
+                            </p>
+                        </div>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{{ member.name }}</h4>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ward {{ member.ward.number }} Member</p>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="text-center py-6 border border-dashed border-slate-200 dark:border-slate-700/80 rounded-xl bg-slate-50/50 dark:bg-slate-800/50">
-            <i class="bi bi-person-x text-2xl text-slate-400 block mb-1"></i>
-            <p class="text-xs text-slate-500 dark:text-slate-400">No Ward Members registered for this Panchayat yet.</p>
-        </div>
-    {% endif %}
+                {% endif %}
+
+                {% if ward_members %}
+                    {% for member in ward_members %}
+                        <div class="py-2.5 flex items-center gap-3 first:pt-1 last:pb-0">
+                            <div class="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-900/60 flex items-center justify-center font-bold text-emerald-600 dark:text-emerald-400 shrink-0 text-xs overflow-hidden">
+                                {% if member.profile_picture %}
+                                    <img src="{{ member.profile_picture.url }}" class="w-full h-full object-cover" alt="{{ member.name }}">
+                                {% else %}
+                                    {{ member.name|slice:":1"|upper }}
+                                {% endif %}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h4 class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{{ member.name }}</h4>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ward {{ member.ward.number }} Member</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="text-center py-6 border border-dashed border-slate-200 dark:border-slate-700/80 rounded-xl bg-slate-50/50 dark:bg-slate-800/50">
+                <i class="bi bi-person-x text-2xl text-slate-400 block mb-1"></i>
+                <p class="text-xs text-slate-500 dark:text-slate-400">No representatives registered for this Panchayat yet.</p>
+            </div>
+        {% endif %}
+    </div>
 </div>

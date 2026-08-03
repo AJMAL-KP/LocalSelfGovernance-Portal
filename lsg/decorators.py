@@ -38,5 +38,9 @@ def villager_required(view_func):
 def ward_member_required(view_func):
     return role_required(Role.WARD_MEMBER)(view_func)
 
-def panchayat_admin_required(view_func):
-    return role_required(Role.PANCHAYAT_ADMIN)(view_func)
+def panchayat_president_required(view_func):
+    return role_required(Role.PANCHAYAT_PRESIDENT)(view_func)
+
+# Backwards compatibility alias
+panchayat_admin_required = panchayat_president_required
+

@@ -1,17 +1,12 @@
-{% extends 'lsg/base.html' %}
+{% extends 'lsg/dashboard_base.html' %}
 
 {% block title %}Complaints - LSG Portal{% endblock %}
 
-{% block content %}
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-    
-    <!-- Left Column: Fixed Sidebar Navigation -->
-    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-        {% include 'lsg/partials/sidebar.html' with active_page='complaints' %}
-    </aside>
+{% block sidebar %}
+    {% include 'lsg/partials/sidebar.html' with active_page='complaints' %}
+{% endblock %}
 
-    <!-- Center Column: Main Content -->
-    <main class="lg:col-span-6 space-y-6 min-w-0">
+{% block dashboard_content %}
         <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-5">
             <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700/80">
                 <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
@@ -33,7 +28,7 @@
                         Track your submitted civic issues and report new ward level complaints directly to elected representatives.
                     {% elif user.role == 'WARD_MEMBER' %}
                         Review and resolve public grievances filed by residents of <strong>Ward {{ user.ward.number }}</strong>.
-                    {% elif user.role == 'PANCHAYAT_ADMIN' %}
+                    {% elif user.role == 'PANCHAYAT_PRESIDENT' %}
                         Oversee and manage high-level civic complaints for <strong>{{ user.panchayat.name }}</strong>.
                     {% endif %}
                 </div>
@@ -49,12 +44,4 @@
                 </p>
             </div>
         </div>
-    </main>
-
-    <!-- Right Column: Fixed Ward Members Sidebar -->
-    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-        {% include 'lsg/partials/ward_members_sidebar.html' %}
-    </aside>
-
-</div>
 {% endblock %}

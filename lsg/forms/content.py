@@ -1,5 +1,5 @@
 from django import forms
-from lsg.models import Post
+from lsg.models import Post, Role, PostScope
 
 class PostForm(forms.ModelForm):
     title = forms.CharField(
@@ -21,17 +21,32 @@ class PostForm(forms.ModelForm):
         }),
         label="Description"
     )
+    scope = forms.ChoiceField(
+        choices=PostScope.choices,
+        widget=forms.Select(attrs={'class': 'lsg-input'}),
+        label="Post Scope",
+        required=False
+    )
 
     class Meta:
         model = Post
-        fields = ('title', 'content', 'image')
+        fields = ('title', 'content', 'scope', 'image')
         widgets = {
             'image': forms.FileInput(attrs={'class': 'lsg-input'}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['title'].required = True
         self.fields['content'].required = True
         self.fields['image'].required = False
+
+        if user and user.role == Role.PANCHAYAT_PRESIDENT:
+            self.fields['scope'].required = True
+            if not self.instance.pk and not self.data:
+                self.fields['scope'].initial = PostScope.PANCHAYAT
+        else:
+            if 'scope' in self.fields:
+                del self.fields['scope']
+
 

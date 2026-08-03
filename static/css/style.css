@@ -218,23 +218,22 @@ html.dark .lsg-input:focus {
     margin-top: 0.25rem !important;
 }
 
-/* Custom Scrollbar */
-.lsg-dropdown-menu::-webkit-scrollbar {
-    width: 6px;
+/* Hide scrollbar globally but keep scroll functionality */
+::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari, Opera */
+}
+* {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
 }
 
-.lsg-dropdown-menu::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+/* Explicitly hide scrollbar for columns and scroll containers */
+html, body, main, aside, .overflow-y-auto, .overflow-x-auto, .overflow-auto {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
 }
-
-.lsg-dropdown-menu::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-}
-
-.lsg-dropdown-menu::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+html::-webkit-scrollbar, body::-webkit-scrollbar, main::-webkit-scrollbar, aside::-webkit-scrollbar, .overflow-y-auto::-webkit-scrollbar, .overflow-x-auto::-webkit-scrollbar, .overflow-auto::-webkit-scrollbar {
+    display: none !important;
 }
 
 .lsg-dropdown-item {

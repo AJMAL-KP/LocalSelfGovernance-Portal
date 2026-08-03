@@ -1,0 +1,494 @@
+{% extends 'lsg/dashboard_base.html' %}
+
+{% block title %}Manage Members - LSG Portal{% endblock %}
+
+{% block sidebar %}
+{% include 'lsg/partials/sidebar.html' with active_page='manage_members' %}
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="space-y-6">
+    <!-- Main Member Management Card -->
+    <div
+        class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-6">
+        <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700/80 gap-4">
+            <div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <i class="bi bi-people-fill text-indigo-600 dark:text-indigo-400"></i>
+                    <span>Panchayat Member Management</span>
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Manage Ward Representatives and add members for <strong
+                        class="text-slate-800 dark:text-slate-200 font-semibold">{{ user.panchayat.name }}</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Search Villagers to Promote Section -->
+        <div
+            class="bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl p-4 sm:p-6 space-y-4 relative">
+            <h3
+                class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <i class="bi bi-search text-indigo-500"></i>
+                <span>Add New Ward Member</span>
+            </h3>
+
+            <form method="get" action="{% url 'manage_members' %}" id="search-form"
+                class="flex flex-col sm:flex-row gap-2 relative">
+                <input type="hidden" name="user_id" id="search-user-id" value="{{ user_id|default:'' }}">
+
+                <div class="relative flex-grow">
+                    <input type="text" name="q" id="search-input" value="{{ q|default:'' }}" required
+                        placeholder="Search villagers by name, email, phone, or Aadhar..." autocomplete="off"
+                        class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 pl-3 pr-10 py-2.5 focus:border-indigo-500 focus:outline-none transition">
+
+                    <!-- Suggestions Dropdown -->
+                    <div id="suggestions-dropdown"
+                        class="hidden absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/60">
+                    </div>
+                </div>
+
+                <div class="shrink-0">
+                    <select name="search_ward_id" id="search-ward-select"
+                        class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2.5 focus:border-indigo-500 focus:outline-none transition">
+                        <option value="">All Wards</option>
+                        {% for w in wards %}
+                        <option value="{{ w.id }}" {% if search_ward_id == w.id|stringformat:"s" %}selected{% endif %}>
+                            Ward {{ w.number }}{% if w.name %} - {{ w.name }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit"
+                    class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 dark:shadow-none transition shrink-0">
+                    <i class="bi bi-search"></i>
+                    <span>Search</span>
+                </button>
+                {% if q or search_ward_id or user_id %}
+                <a href="{% url 'manage_members' %}"
+                    class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0 border border-slate-200 dark:border-slate-700">
+                    Clear
+                </a>
+                {% endif %}
+            </form>
+
+            <!-- Search Results -->
+            {% if search_results %}
+            <div id="search-results-container" class="pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                <h4 class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-3">Search Results</h4>
+
+                <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                    {% for result in search_results %}
+                    <div
+                        class="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+                        <div class="flex items-start gap-3 flex-grow">
+                            <div
+                                class="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden mt-0.5">
+                                {% if result.profile_picture %}
+                                <img src="{{ result.profile_picture.url }}" class="w-full h-full object-cover"
+                                    alt="{{ result.name }}">
+                                {% else %}
+                                {{ result.name|slice:":1"|upper }}
+                                {% endif %}
+                            </div>
+                            <div
+                                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-xs w-full">
+                                <div class="sm:col-span-2 md:col-span-3">
+                                    <div class="font-bold text-slate-900 dark:text-slate-100 text-sm">{{ result.name }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 dark:text-slate-400">Email:</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">{{ result.email }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 dark:text-slate-400">Phone:</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">{{ result.phone }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 dark:text-slate-400">Aadhar ID:</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">{{ result.aadhar_id }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 dark:text-slate-400">Age:</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">{{ result.age|default:"Not specified" }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 dark:text-slate-400">Registered Ward:</span>
+                                    <span class="font-bold text-indigo-600 dark:text-indigo-400">
+                                        {% if result.ward %}
+                                        Ward {{ result.ward.number }}{% if result.ward.name %} - {{ result.ward.name }}{% endif %}
+                                        {% else %}
+                                        None
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="post" action="{% url 'manage_members' %}"
+                            class="flex items-center m-0 shrink-0 self-end md:self-auto"
+                            onsubmit="event.preventDefault(); showConfirmModal('Are you sure you want to promote {{ result.name|default:result.username|escapejs }} to Ward Member? They will represent Ward {{ result.ward.number }}.', this);">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="promote">
+                            <input type="hidden" name="user_id" value="{{ result.id }}">
+
+                            <button type="submit"
+                                class="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition w-full md:w-auto justify-center">
+                                <i class="bi bi-person-plus-fill"></i>
+                                <span>Promote</span>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% elif q or search_ward_id %}
+            <div id="search-results-container" class="pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                <p class="text-xs text-slate-500 dark:text-slate-400 py-2">No villagers found matching search filter.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Current Ward Members List -->
+        <div class="space-y-4">
+            <h3
+                class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <i class="bi bi-person-badge-fill text-indigo-500"></i>
+                <span>Current Ward Representatives (Click row for full details)</span>
+            </h3>
+
+            {% if members %}
+            <div class="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+                <table class="w-full text-left text-xs">
+                    <thead
+                        class="bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200/80 dark:border-slate-700/80">
+                        <tr>
+                            <th class="py-3.5 px-4">Representative</th>
+                            <th class="py-3.5 px-4">Email</th>
+                            <th class="py-3.5 px-4">Ward Represented</th>
+                            <th class="py-3.5 px-4">Phone</th>
+                            <th class="py-3.5 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody
+                        class="divide-y divide-slate-100 dark:divide-slate-700/60 text-slate-700 dark:text-slate-200">
+                        {% for u in members %}
+                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-700/40 transition cursor-pointer" onclick="handleRowClick(event, {
+                                            name: '{{ u.name|escapejs }}', 
+                                            username: '{{ u.username|escapejs }}', 
+                                            email: '{{ u.email|escapejs }}', 
+                                            phone: '{{ u.phone|escapejs }}', 
+                                            aadhar_id: '{{ u.aadhar_id|escapejs }}', 
+                                            age: '{{ u.age|default:" Not specified" }}',
+                            ward: 'Ward {{ u.ward.number }}{% if u.ward.name %} - {{ u.ward.name }}{% endif %}' ,
+                            profile_picture: '{% if u.profile_picture %}{{ u.profile_picture.url }}{% endif %}' })">
+                            <td class="py-3.5 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                                        {% if u.profile_picture %}
+                                        <img src="{{ u.profile_picture.url }}" class="w-full h-full object-cover"
+                                            alt="{{ u.name }}">
+                                        {% else %}
+                                        {{ u.name|slice:":1"|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-900 dark:text-slate-100">{{ u.name }}</div>
+                                        <div class="text-[11px] text-slate-400 dark:text-slate-400">Aadhar: {{ u.aadhar_id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4 font-medium text-slate-600 dark:text-slate-300">
+                                {{ u.email }}
+                            </td>
+                            <td class="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">
+                                Ward {{ u.ward.number }}{% if u.ward.name %} - {{ u.ward.name }}{% endif %}
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-medium">
+                                {{ u.phone }}
+                            </td>
+                            <td class="py-3.5 px-4 text-right">
+                                <form method="post" action="{% url 'manage_members' %}" class="m-0 inline"
+                                    onsubmit="event.preventDefault(); showConfirmModal('Are you sure you want to remove {{ u.name|default:u.username|escapejs }} as Ward Representative? They will be demoted back to a Villager.', this);">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="demote">
+                                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                                    <button type="submit"
+                                        class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100/80 dark:hover:bg-rose-900/60 border border-rose-200/60 dark:border-rose-900/60 transition">
+                                        <i class="bi bi-person-dash-fill"></i>
+                                        <span>Remove</span>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div
+                class="flex items-center justify-between bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-4 shadow-xs mt-4">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if search_ward_id %}&search_ward_id={{ search_ward_id }}{% endif %}"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100/80 transition">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Previous</span>
+                </a>
+                {% else %}
+                <span
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800/40 cursor-not-allowed">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Previous</span>
+                </span>
+                {% endif %}
+
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    Page <strong class="text-slate-800 dark:text-slate-200">{{ page_obj.number }}</strong> of <strong
+                        class="text-slate-800 dark:text-slate-200">{{ page_obj.paginator.num_pages }}</strong>
+                </span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if search_ward_id %}&search_ward_id={{ search_ward_id }}{% endif %}"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100/80 transition">
+                    <span>Next</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+                {% else %}
+                <span
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800/40 cursor-not-allowed">
+                    <span>Next</span>
+                    <i class="bi bi-arrow-right"></i>
+                </span>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% else %}
+            <div
+                class="text-center py-10 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
+                <p class="text-xs text-slate-500 dark:text-slate-400">No Ward Members assigned to this Panchayat yet.
+                    Use the search box above to promote villagers.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal Popup -->
+<div id="confirmModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+    <div
+        class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-sm w-full p-6 shadow-2xl space-y-5 text-center">
+        <div
+            class="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl mx-auto shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="space-y-2">
+            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Confirm Action</h3>
+            <p id="confirm-message" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed px-2"></p>
+        </div>
+        <div class="flex items-center justify-center gap-3 pt-2">
+            <button type="button" onclick="closeConfirmModal()"
+                class="w-1/2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-slate-200/60 dark:border-slate-700/60">
+                Cancel
+            </button>
+            <button type="button" id="confirm-btn-yes"
+                class="w-1/2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100 dark:shadow-none transition">
+                Yes, proceed
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Member Detail Modal Popup -->
+<div id="memberDetailModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div
+        class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/80">
+            <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                <i class="bi bi-person-badge-fill text-indigo-600 dark:text-indigo-400"></i>
+                <span>Representative Profile</span>
+            </h3>
+            <button type="button" onclick="closeMemberDetails()"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="text-center space-y-4">
+            <div class="relative inline-block mx-auto">
+                <img id="modal-profile-pic" src=""
+                    class="w-24 h-24 rounded-full object-cover border-4 border-slate-100 dark:border-slate-700 shadow-md hidden"
+                    alt="Profile Picture">
+                <div id="modal-profile-placeholder"
+                    class="w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center font-bold text-2xl shadow-md border-4 border-slate-100 dark:border-slate-700 mx-auto">
+                    A
+                </div>
+            </div>
+            <h4 id="modal-name" class="text-lg font-bold text-slate-900 dark:text-slate-100"></h4>
+            <div class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs text-left">
+                <div class="py-2.5 flex justify-between gap-4">
+                    <span class="font-medium text-slate-400 shrink-0">Email</span>
+                    <span id="modal-email" class="font-semibold text-slate-800 dark:text-slate-200 truncate"></span>
+                </div>
+                <div class="py-2.5 flex justify-between gap-4">
+                    <span class="font-medium text-slate-400 shrink-0">Phone</span>
+                    <span id="modal-phone" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                </div>
+                <div class="py-2.5 flex justify-between gap-4">
+                    <span class="font-medium text-slate-400 shrink-0">Aadhar ID</span>
+                    <span id="modal-aadhar" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                </div>
+                <div class="py-2.5 flex justify-between gap-4">
+                    <span class="font-medium text-slate-400 shrink-0">Age</span>
+                    <span id="modal-age" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                </div>
+                <div class="py-2.5 flex justify-between gap-4">
+                    <span class="font-medium text-slate-400 shrink-0">Ward Representing</span>
+                    <span id="modal-ward" class="font-bold text-indigo-600 dark:text-indigo-400"></span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center justify-end pt-3 border-t border-slate-100 dark:border-slate-700/80">
+            <button type="button" onclick="closeMemberDetails()"
+                class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts for Dynamic Suggestions and Popup Modal -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('search-input');
+        const searchUserId = document.getElementById('search-user-id');
+        const suggestionsDropdown = document.getElementById('suggestions-dropdown');
+        const searchWardSelect = document.getElementById('search-ward-select');
+        const searchForm = document.getElementById('search-form');
+        const searchResultsContainer = document.getElementById('search-results-container');
+
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function () {
+            // 1. Reset hidden user_id input since text is edited
+            searchUserId.value = '';
+
+            // 2. Automatically clear/hide displayed search results on edit
+            if (searchResultsContainer) {
+                searchResultsContainer.style.display = 'none';
+            }
+
+            // 3. Debounce and fetch autocomplete suggestions
+            clearTimeout(debounceTimer);
+            const query = searchInput.value.trim();
+            const wardId = searchWardSelect.value;
+
+            if (query.length < 1) {
+                suggestionsDropdown.innerHTML = '';
+                suggestionsDropdown.classList.add('hidden');
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`/manage-members/suggest/?q=${encodeURIComponent(query)}&search_ward_id=${encodeURIComponent(wardId)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        suggestionsDropdown.innerHTML = '';
+                        if (data.suggestions && data.suggestions.length > 0) {
+                            data.suggestions.forEach(item => {
+                                const option = document.createElement('div');
+                                option.className = 'p-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer text-xs transition flex flex-col';
+                                option.innerHTML = `
+                                        <span class="font-bold text-slate-900 dark:text-slate-100">${item.name}</span>
+                                        <span class="text-[10px] text-slate-400 dark:text-slate-400">${item.email} · Aadhar: ${item.aadhar_id} · ${item.ward}</span>
+                                    `;
+                                option.addEventListener('click', function () {
+                                    searchInput.value = item.name;
+                                    searchUserId.value = item.id;
+                                    suggestionsDropdown.innerHTML = '';
+                                    suggestionsDropdown.classList.add('hidden');
+                                    searchForm.submit(); // submit form immediately on selection
+                                });
+                                suggestionsDropdown.appendChild(option);
+                            });
+                            suggestionsDropdown.classList.remove('hidden');
+                        } else {
+                            suggestionsDropdown.classList.add('hidden');
+                        }
+                    })
+                    .catch(err => console.error('Error fetching suggestions:', err));
+            }, 250);
+        });
+
+        // Close dropdown if clicked outside
+        document.addEventListener('click', function (e) {
+            if (!searchInput.contains(e.target) && !suggestionsDropdown.contains(e.target)) {
+                suggestionsDropdown.classList.add('hidden');
+            }
+        });
+    });
+
+    // Representative details popup modal functions
+    function handleRowClick(event, data) {
+        // Prevent modal if clicked on demote form button
+        if (event.target.closest('form') || event.target.closest('button')) {
+            return;
+        }
+
+        const modal = document.getElementById('memberDetailModal');
+        const modalPic = document.getElementById('modal-profile-pic');
+        const modalPlaceholder = document.getElementById('modal-profile-placeholder');
+
+        document.getElementById('modal-name').textContent = data.name || data.username;
+        document.getElementById('modal-email').textContent = data.email;
+        document.getElementById('modal-phone').textContent = data.phone;
+        document.getElementById('modal-aadhar').textContent = data.aadhar_id;
+        document.getElementById('modal-age').textContent = data.age;
+        document.getElementById('modal-ward').textContent = data.ward;
+
+        if (data.profile_picture) {
+            modalPic.src = data.profile_picture;
+            modalPic.classList.remove('hidden');
+            modalPlaceholder.classList.add('hidden');
+        } else {
+            modalPic.classList.add('hidden');
+            modalPlaceholder.textContent = (data.name || data.username).substring(0, 1).toUpperCase();
+            modalPlaceholder.classList.remove('hidden');
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeMemberDetails() {
+        document.getElementById('memberDetailModal').classList.add('hidden');
+    }
+
+    let pendingFormToSubmit = null;
+
+    function showConfirmModal(message, formElement) {
+        pendingFormToSubmit = formElement;
+        document.getElementById('confirm-message').textContent = message;
+        document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.add('hidden');
+        pendingFormToSubmit = null;
+    }
+
+    document.getElementById('confirm-btn-yes').addEventListener('click', function () {
+        if (pendingFormToSubmit) {
+            pendingFormToSubmit.submit();
+        }
+        closeConfirmModal();
+    });
+</script>
+{% endblock %}
+
+{% block right_sidebar_block %}{% endblock %}
