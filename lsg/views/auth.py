@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
+from django.core.paginator import Paginator
 from lsg.forms.auth import RegistrationForm, LoginForm, UserProfileForm, EmailChangeForm, CustomPasswordChangeForm
 from lsg.models import User, Role, Panchayat, Ward
 
@@ -53,7 +54,7 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-from lsg.views.content import get_ward_members, can_user_manage_post
+from lsg.views.content import get_ward_members, get_panchayat_president, can_user_manage_post
 from django.utils import timezone
 
 @login_required(login_url='login')
@@ -91,15 +92,21 @@ def profile_view(request):
             else:
                 show_edit_modal = True
 
-    user_posts = user.posts.all().order_by('-created_at')
-    for post in user_posts:
+    user_posts_queryset = user.posts.all().order_by('-created_at')
+    paginator = Paginator(user_posts_queryset, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    for post in page_obj:
         post.can_manage = can_user_manage_post(user, post)
 
     return render(request, 'lsg/auth/profile.html', {
         'user': user,
         'profile_form': form,
         'show_edit_modal': show_edit_modal,
-        'user_posts': user_posts,
+        'user_posts': page_obj,
+        'page_obj': page_obj,
+        'panchayat_president': get_panchayat_president(user),
         'ward_members': get_ward_members(user)
     })
 
@@ -150,6 +157,7 @@ def settings_view(request):
         'email_form': email_form,
         'password_form': password_form,
         'active_form': active_form,
+        'panchayat_president': get_panchayat_president(user),
         'ward_members': get_ward_members(user)
     })
 

@@ -1,17 +1,12 @@
-{% extends 'lsg/base.html' %}
+{% extends 'lsg/dashboard_base.html' %}
 
 {% block title %}Alerts - LSG Portal{% endblock %}
 
-{% block content %}
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-    
-    <!-- Left Column: Fixed Sidebar Navigation -->
-    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-        {% include 'lsg/partials/sidebar.html' with active_page='announcements' %}
-    </aside>
+{% block sidebar %}
+    {% include 'lsg/partials/sidebar.html' with active_page='announcements' %}
+{% endblock %}
 
-    <!-- Center Column: Main Content -->
-    <main class="lg:col-span-6 space-y-6 min-w-0">
+{% block dashboard_content %}
         <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-5">
             <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700/80">
                 <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
@@ -19,7 +14,7 @@
                     <span>Alerts & Broadcasts</span>
                 </h3>
                 
-                {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_ADMIN' %}
+                {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_PRESIDENT' %}
                     <button class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 opacity-60 cursor-not-allowed border border-rose-200/60 dark:border-rose-900/60" disabled>
                         <i class="bi bi-exclamation-octagon"></i>
                         <span>Create Alert</span>
@@ -32,10 +27,10 @@
                 <i class="bi bi-shield-alert text-amber-600 dark:text-amber-400 text-base shrink-0"></i>
                 <div>
                     {% if user.role == 'VILLAGER' %}
-                        You will receive urgent notifications and alerts from your Panchayat Admin and Ward Member here.
+                        You will receive urgent notifications and alerts from your Panchayat President and Ward Member here.
                     {% elif user.role == 'WARD_MEMBER' %}
                         You can broadcast emergency alerts to all villagers of <strong>Ward {{ user.ward.number }}</strong>.
-                    {% elif user.role == 'PANCHAYAT_ADMIN' %}
+                    {% elif user.role == 'PANCHAYAT_PRESIDENT' %}
                         You can broadcast critical alerts and announcements to the entire <strong>{{ user.panchayat.name }}</strong>.
                     {% endif %}
                 </div>
@@ -51,12 +46,4 @@
                 </p>
             </div>
         </div>
-    </main>
-
-    <!-- Right Column: Fixed Ward Members Sidebar -->
-    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-        {% include 'lsg/partials/ward_members_sidebar.html' %}
-    </aside>
-
-</div>
 {% endblock %}

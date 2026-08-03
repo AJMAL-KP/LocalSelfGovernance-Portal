@@ -51,19 +51,33 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Hide all scrollbars globally across all elements -->
+    <style>
+        ::-webkit-scrollbar {
+            display: none !important;
+        }
+        * {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 
-<body class="min-h-full flex flex-col font-sans text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 antialiased selection:bg-indigo-500 selection:text-white pt-16 transition-colors duration-200">
+<body class="{% block body_class %}min-h-full{% endblock %} flex flex-col font-sans text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 antialiased selection:bg-indigo-500 selection:text-white pt-16 transition-colors duration-200">
     <!-- Navbar -->
-    {% include 'lsg/partials/navbar.html' %}
+    {% block navbar %}
+        {% include 'lsg/partials/navbar.html' %}
+    {% endblock %}
 
     <!-- Main Content Container -->
-    <div class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <!-- Messages Toast Alerts -->
-        {% include 'lsg/partials/messages.html' %}
+    <div class="{% block main_container_class %}flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6{% endblock %}">
+        {% block main_content_wrapper %}
+            <!-- Messages Toast Alerts -->
+            {% include 'lsg/partials/messages.html' %}
 
-        {% block content %}{% endblock %}
+            {% block content %}{% endblock %}
+        {% endblock %}
     </div>
 
     <!-- Global JS -->

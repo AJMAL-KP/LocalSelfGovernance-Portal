@@ -1,19 +1,26 @@
-{% extends 'lsg/base.html' %}
+{% extends 'lsg/dashboard_base.html' %}
 
 {% block title %}Posts - LSG Portal{% endblock %}
 
-{% block content %}
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-    
-    <!-- Left Column: Fixed Sidebar Navigation -->
-    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-        {% include 'lsg/partials/sidebar.html' with active_page='posts' %}
-    </aside>
+{% block sidebar %}
+    {% include 'lsg/partials/sidebar.html' with active_page='posts' %}
+{% endblock %}
 
-    <!-- Center Column: Main Content (Posts Feed) -->
-    <main class="lg:col-span-6 space-y-6 min-w-0">
-        <!-- Posts List -->
+{% block dashboard_content %}
         <div class="space-y-5">
+            <div class="flex items-center justify-between px-1">
+                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
+                    <i class="bi bi-collection-fill text-indigo-600 dark:text-indigo-400"></i>
+                    <span>Recent Posts</span>
+                </h3>
+                {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_PRESIDENT' %}
+                    <a href="{% url 'create_post' %}?next=posts" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-md shadow-indigo-200 dark:shadow-none transition">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>New Post</span>
+                    </a>
+                {% endif %}
+            </div>
+
             {% if posts %}
                 {% for post in posts %}
                     <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200">
@@ -166,17 +173,9 @@
                 </div>
             {% endif %}
         </div>
-    </main>
-
-    <!-- Right Column: Fixed Ward Members Sidebar -->
-    <aside class="lg:col-span-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-        {% include 'lsg/partials/ward_members_sidebar.html' %}
-    </aside>
-
-</div>
 
 <!-- Floating Create Post Button -->
-{% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_ADMIN' %}
+{% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_PRESIDENT' %}
     <div class="fixed bottom-8 right-8 z-40">
         <a href="{% url 'create_post' %}" class="group inline-flex items-center h-14 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-full shadow-xl shadow-indigo-600/30 dark:shadow-indigo-950/50 transition-all duration-300 ease-in-out cursor-pointer" title="Create Post">
             <span class="w-6 h-6 flex items-center justify-center text-xl shrink-0 transition-transform duration-300 group-hover:rotate-90">

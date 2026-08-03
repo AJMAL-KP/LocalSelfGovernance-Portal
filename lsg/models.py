@@ -1,10 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 
 class Role(models.TextChoices):
     VILLAGER = 'VILLAGER', 'Villager'
     WARD_MEMBER = 'WARD_MEMBER', 'Ward Member'
-    PANCHAYAT_ADMIN = 'PANCHAYAT_ADMIN', 'Panchayat Admin'
+    PANCHAYAT_PRESIDENT = 'PANCHAYAT_PRESIDENT', 'Panchayat President'
+
+Role.PANCHAYAT_ADMIN = Role.PANCHAYAT_PRESIDENT
 
 
 class Taluk(models.Model):
@@ -77,6 +80,52 @@ class User(AbstractUser):
     )
 
     password_changed_at = models.DateTimeField(null=True, blank=True, verbose_name="Password Last Changed At")
+
+    def clean(self):
+        super().clean()
+
+        # 1. Single Panchayat President per Panchayat
+        if self.role == Role.PANCHAYAT_PRESIDENT and self.panchayat:
+            existing_president = User.objects.filter(
+                panchayat=self.panchayat,
+                role=Role.PANCHAYAT_PRESIDENT
+            ).exclude(pk=self.pk)
+            if existing_president.exists():
+                raise ValidationError({
+                    'role': f"This Panchayat already has a Panchayat President ({existing_president.first().name or existing_president.first().username})."
+                })
+
+        # 2. Single Ward Representative (Ward Member) per Ward
+        if self.role == Role.WARD_MEMBER and self.ward:
+            existing_member = User.objects.filter(
+                ward=self.ward,
+                role=Role.WARD_MEMBER
+            ).exclude(pk=self.pk)
+            if existing_member.exists():
+                raise ValidationError({
+                    'role': f"This Ward already has a Ward Representative ({existing_member.first().name or existing_member.first().username})."
+                })
+
+        # 3. Ensure no Ward Representative for the Ward of a Panchayat President
+        if self.role == Role.WARD_MEMBER and self.ward:
+            president_in_ward = User.objects.filter(
+                ward=self.ward,
+                role=Role.PANCHAYAT_PRESIDENT
+            ).exclude(pk=self.pk)
+            if president_in_ward.exists():
+                raise ValidationError({
+                    'ward': f"This Ward belongs to a Panchayat President ({president_in_ward.first().name or president_in_ward.first().username}) and cannot have a separate Ward Representative."
+                })
+
+        if self.role == Role.PANCHAYAT_PRESIDENT and self.ward:
+            member_in_ward = User.objects.filter(
+                ward=self.ward,
+                role=Role.WARD_MEMBER
+            ).exclude(pk=self.pk)
+            if member_in_ward.exists():
+                raise ValidationError({
+                    'ward': f"This Ward already has a Ward Representative ({member_in_ward.first().name or member_in_ward.first().username}). A Panchayat President's Ward cannot have a separate Ward Representative."
+                })
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

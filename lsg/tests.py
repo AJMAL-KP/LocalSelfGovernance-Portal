@@ -268,48 +268,48 @@ class AuthorizationAndDashboardTests(TestCase):
         self.assertRedirects(response, reverse('posts'))
 
     def test_unauthenticated_users_redirected(self):
-        protected_urls = ['posts', 'alerts', 'documents', 'complaints', 'manage_users', 'profile']
+        protected_urls = ['posts', 'alerts', 'documents', 'complaints', 'manage_members', 'profile']
         for name in protected_urls:
             response = self.client.get(reverse(name))
             self.assertRedirects(response, f'/login/?next={reverse(name)}')
 
-    def test_manage_users_access_control(self):
+    def test_manage_members_access_control(self):
         # Villager should be redirected to posts with a message
         self.client.force_login(self.villager)
-        response = self.client.get(reverse('manage_users'))
+        response = self.client.get(reverse('manage_members'))
         self.assertRedirects(response, reverse('posts'))
         
         # Ward Member should be redirected to posts with a message
         self.client.force_login(self.ward_member)
-        response = self.client.get(reverse('manage_users'))
+        response = self.client.get(reverse('manage_members'))
         self.assertRedirects(response, reverse('posts'))
 
         # Panchayat Admin should be allowed
         self.client.force_login(self.panchayat_admin)
-        response = self.client.get(reverse('manage_users'))
+        response = self.client.get(reverse('manage_members'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Panchayat User Management')
+        self.assertContains(response, 'Panchayat Member Management')
 
     def test_sidebar_role_based_menu_rendering(self):
         # 1. Villager Sidebar Verification
         self.client.force_login(self.villager)
         response = self.client.get(reverse('posts'))
         self.assertContains(response, 'Posts')
-        self.assertContains(response, 'Announcements')
+        self.assertContains(response, 'Alerts')
         self.assertContains(response, 'Complaints')
         self.assertContains(response, 'Documents')
         self.assertContains(response, 'Profile')
-        self.assertNotContains(response, 'Manage Users')
+        self.assertNotContains(response, 'Manage Members')
 
         # 2. Panchayat Admin Sidebar Verification
         self.client.force_login(self.panchayat_admin)
         response = self.client.get(reverse('posts'))
         self.assertContains(response, 'Posts')
-        self.assertContains(response, 'Announcements')
+        self.assertContains(response, 'Alerts')
         self.assertContains(response, 'Complaints')
         self.assertContains(response, 'Documents')
         self.assertContains(response, 'Profile')
-        self.assertContains(response, 'Manage Users')
+        self.assertContains(response, 'Manage Members')
 
 
 class ProfileAndSettingsTests(TestCase):
@@ -468,6 +468,38 @@ class ProfileAndSettingsTests(TestCase):
         from django.contrib.auth import authenticate
         authenticated_user = authenticate(username=self.user.username, password='newsecurepassword123')
         self.assertIsNotNone(authenticated_user)
+
+    def test_profile_posts_pagination(self):
+        # Change user's role to WARD_MEMBER so profile shows their recent uploaded posts
+        self.user.role = Role.WARD_MEMBER
+        self.user.save()
+        
+        self.client.force_login(self.user)
+        
+        # Create 25 posts authored by self.user
+        posts_to_create = []
+        for i in range(25):
+            posts_to_create.append(
+                Post(
+                    author=self.user,
+                    title=f"My Post {i}",
+                    content=f"Content {i}",
+                    scope=PostScope.PANCHAYAT,
+                    panchayat=self.panchayat
+                )
+            )
+        Post.objects.bulk_create(posts_to_create)
+        
+        response = self.client.get(reverse('profile'))
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify pagination limit of 20
+        self.assertEqual(len(response.context['user_posts']), 20)
+        
+        page_obj = response.context['page_obj']
+        self.assertEqual(page_obj.paginator.num_pages, 2)
+        self.assertTrue(page_obj.has_next())
+        self.assertFalse(page_obj.has_previous())
 
 
 class PostManagementTests(TestCase):
@@ -659,7 +691,11 @@ class PostManagementTests(TestCase):
         self.client.force_login(self.panchayat_admin_a)
         
         # Can create Panchayat-level post successfully
-        create_data = {'title': 'New Panchayat Post', 'content': 'Important panchayat announcement'}
+        create_data = {
+            'title': 'New Panchayat Post',
+            'content': 'Important panchayat announcement',
+            'scope': PostScope.PANCHAYAT
+        }
         response = self.client.post(reverse('create_post'), data=create_data)
         self.assertRedirects(response, reverse('posts'))
         
@@ -669,7 +705,11 @@ class PostManagementTests(TestCase):
         self.assertEqual(new_post.panchayat, self.panchayat_a)
         
         # Can edit own post
-        edit_data = {'title': 'Updated Panchayat Post', 'content': 'Announcement content'}
+        edit_data = {
+            'title': 'Updated Panchayat Post',
+            'content': 'Announcement content',
+            'scope': PostScope.PANCHAYAT
+        }
         response = self.client.post(reverse('edit_post', args=[new_post.id]), data=edit_data)
         self.assertRedirects(response, reverse('posts'))
         new_post.refresh_from_db()
@@ -678,7 +718,11 @@ class PostManagementTests(TestCase):
         # Can edit another Admin's Panchayat post in same Panchayat
         other_admin_post = self.post_panchayat_a # created by panchayat_admin_a
         self.client.force_login(self.panchayat_admin_a_other)
-        edit_data_other = {'title': 'Admin override', 'content': 'Overriding'}
+        edit_data_other = {
+            'title': 'Admin override',
+            'content': 'Overriding',
+            'scope': PostScope.PANCHAYAT
+        }
         response = self.client.post(reverse('edit_post', args=[other_admin_post.id]), data=edit_data_other)
         self.assertRedirects(response, reverse('posts'))
         other_admin_post.refresh_from_db()
@@ -704,6 +748,7 @@ class PostManagementTests(TestCase):
         create_data = {
             'title': 'Post with Image',
             'content': 'Check out this cool image',
+            'scope': PostScope.PANCHAYAT,
             'image': mock_image
         }
         response = self.client.post(reverse('create_post'), data=create_data)
@@ -715,6 +760,271 @@ class PostManagementTests(TestCase):
         import os
         if new_post.image and os.path.exists(new_post.image.path):
             os.remove(new_post.image.path)
+
+    def test_posts_list_pagination_limit(self):
+        self.client.force_login(self.villager_a1)
+        
+        # Delete existing posts to start fresh
+        Post.objects.all().delete()
+        
+        # Create 25 posts in Panchayat A
+        posts_to_create = []
+        for i in range(25):
+            posts_to_create.append(
+                Post(
+                    author=self.ward_member_a1,
+                    title=f"Post {i}",
+                    content=f"Content {i}",
+                    scope=PostScope.PANCHAYAT,
+                    panchayat=self.panchayat_a
+                )
+            )
+        Post.objects.bulk_create(posts_to_create)
+        
+        response = self.client.get(reverse('posts'))
+        self.assertEqual(response.status_code, 200)
+        
+        # Check that page 1 has exactly 20 posts
+        self.assertEqual(len(response.context['posts']), 20)
+        
+        page_obj = response.context['page_obj']
+        self.assertEqual(page_obj.paginator.num_pages, 2)
+        self.assertTrue(page_obj.has_next())
+        self.assertFalse(page_obj.has_previous())
+
+
+class ManageMembersTests(TestCase):
+
+    def setUp(self):
+        self.taluk = Taluk.objects.create(name="Central Taluk")
+        self.panchayat = Panchayat.objects.create(name="Panchayat A", taluk=self.taluk)
+        self.ward_1 = Ward.objects.create(number=1, name="Ward 1", panchayat=self.panchayat)
+        self.ward_2 = Ward.objects.create(number=2, name="Ward 2", panchayat=self.panchayat)
+        
+        # Panchayat Admin
+        self.admin = User.objects.create_user(
+            username='admin@example.com',
+            email='admin@example.com',
+            password='password123',
+            name='President A',
+            role=Role.PANCHAYAT_PRESIDENT,
+            panchayat=self.panchayat,
+            phone='9876543210',
+            aadhar_id='111111111111',
+            age=45
+        )
+        
+        # Villager
+        self.villager = User.objects.create_user(
+            username='villager@example.com',
+            email='villager@example.com',
+            password='password123',
+            name='Villager A',
+            role=Role.VILLAGER,
+            panchayat=self.panchayat,
+            ward=self.ward_1,
+            phone='9876543211',
+            aadhar_id='222222222222',
+            age=25
+        )
+
+    def test_manage_members_search(self):
+        self.client.force_login(self.admin)
+        
+        # 1-character query matching villager
+        response = self.client.get(reverse('manage_members') + '?q=V')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Villager A')
+        
+        # Suffix wildcard matching
+        response = self.client.get(reverse('manage_members') + '?q=Vill%')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Villager A')
+        
+        # Search query matching and filtered by Ward 1
+        response = self.client.get(reverse('manage_members') + f'?q=Villager&search_ward_id={self.ward_1.id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Villager A')
+
+        # Search query matching but filtered by Ward 2 (no match)
+        response = self.client.get(reverse('manage_members') + f'?q=Villager&search_ward_id={self.ward_2.id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Villager A')
+
+    def test_manage_members_promote_success(self):
+        self.client.force_login(self.admin)
+        
+        # Promote Villager A to Ward Representative (ward is automatically profile ward)
+        response = self.client.post(reverse('manage_members'), {
+            'action': 'promote',
+            'user_id': self.villager.id
+        })
+        self.assertRedirects(response, reverse('manage_members'))
+        
+        # Verify db changes
+        self.villager.refresh_from_db()
+        self.assertEqual(self.villager.role, Role.WARD_MEMBER)
+        self.assertEqual(self.villager.ward, self.ward_1)
+
+    def test_manage_members_promote_validation_error(self):
+        # Assign a representative to Ward 1 first
+        User.objects.create_user(
+            username='other_member@example.com',
+            email='other_member@example.com',
+            password='password123',
+            name='Other Representative',
+            role=Role.WARD_MEMBER,
+            panchayat=self.panchayat,
+            ward=self.ward_1,
+            phone='9876543212',
+            aadhar_id='333333333333',
+            age=35
+        )
+        
+        self.client.force_login(self.admin)
+        
+        # Promote self.villager (who is also registered in Ward 1) to Ward Member.
+        # Since Ward 1 already has a representative, this should fail.
+        response = self.client.post(reverse('manage_members'), {
+            'action': 'promote',
+            'user_id': self.villager.id
+        }, follow=True)
+        
+        # Page should redirect/render with error message
+        self.assertContains(response, 'Error: This Ward already has a Ward Representative')
+        
+        # Verify db state remains unchanged
+        self.villager.refresh_from_db()
+        self.assertEqual(self.villager.role, Role.VILLAGER)
+
+    def test_manage_members_demote(self):
+        # Promote first
+        self.villager.role = Role.WARD_MEMBER
+        self.villager.ward = self.ward_1
+        self.villager.save()
+        
+        self.client.force_login(self.admin)
+        
+        # Demote back to villager
+        response = self.client.post(reverse('manage_members'), {
+            'action': 'demote',
+            'user_id': self.villager.id
+        })
+        self.assertRedirects(response, reverse('manage_members'))
+        
+        # Verify db changes
+        self.villager.refresh_from_db()
+        self.assertEqual(self.villager.role, Role.VILLAGER)
+
+    def test_manage_members_pagination(self):
+        self.client.force_login(self.admin)
+        
+        # Create 15 ward members to verify pagination after 10
+        # Wards must be created first since each ward can only have 1 representative
+        wards_to_create = []
+        for i in range(3, 18):
+            wards_to_create.append(Ward(number=i, panchayat=self.panchayat))
+        Ward.objects.bulk_create(wards_to_create)
+        
+        created_wards = Ward.objects.filter(panchayat=self.panchayat).exclude(number__in=[1, 2]).order_by('number')
+        
+        users_to_create = []
+        for i, ward in enumerate(created_wards):
+            users_to_create.append(
+                User(
+                    username=f"member_{i}@example.com",
+                    email=f"member_{i}@example.com",
+                    name=f"Member {i}",
+                    role=Role.WARD_MEMBER,
+                    panchayat=self.panchayat,
+                    ward=ward,
+                    phone=f"98765432{i+20}",
+                    aadhar_id=f"9999999999{i:02d}",
+                    age=30
+                )
+            )
+        User.objects.bulk_create(users_to_create)
+        
+        # Get manage_members view
+        response = self.client.get(reverse('manage_members'))
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify page 1 shows exactly 10 members
+        self.assertEqual(len(response.context['members']), 10)
+        
+        # Verify pagination elements
+        page_obj = response.context['page_obj']
+        self.assertEqual(page_obj.paginator.num_pages, 2)
+        self.assertTrue(page_obj.has_next())
+
+    def test_member_suggestions(self):
+        self.client.force_login(self.admin)
+        
+        # 1-character suggest matching "V"
+        response = self.client.get(reverse('member_suggestions') + '?q=V')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('suggestions', data)
+        self.assertEqual(len(data['suggestions']), 1)
+        self.assertEqual(data['suggestions'][0]['name'], 'Villager A')
+        
+        # Suffix wildcard matching suggest "Vi%"
+        response = self.client.get(reverse('member_suggestions') + '?q=Vi%')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['suggestions']), 1)
+
+        # Suggestion filtered by Ward 1 (matches)
+        response = self.client.get(reverse('member_suggestions') + f'?q=V&search_ward_id={self.ward_1.id}')
+        data = response.json()
+        self.assertEqual(len(data['suggestions']), 1)
+        
+        # Suggestion filtered by Ward 2 (no match)
+        response = self.client.get(reverse('member_suggestions') + f'?q=V&search_ward_id={self.ward_2.id}')
+        data = response.json()
+        self.assertEqual(len(data['suggestions']), 0)
+
+    def test_admin_form_validation(self):
+        from lsg.admin import CustomUserCreationForm, CustomUserChangeForm
+        
+        # 1. Test duplicate Panchayat President
+        form_data = {
+            'username': 'admin2@example.com',
+            'email': 'admin2@example.com',
+            'role': Role.PANCHAYAT_PRESIDENT,
+            'name': 'President 2',
+            'aadhar_id': '999999999999',
+            'phone': '9876543999',
+            'panchayat': self.panchayat.id,
+            'password': 'password123',
+            'confirm_password': 'password123',
+        }
+        form = CustomUserCreationForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("__all__", form.errors)
+        self.assertTrue(any("already has a Panchayat President" in err for err in form.errors["__all__"]))
+
+        # 2. Test duplicate Ward Member
+        self.villager.role = Role.WARD_MEMBER
+        self.villager.ward = self.ward_1
+        self.villager.save()
+        
+        form_data = {
+            'username': 'member2@example.com',
+            'email': 'member2@example.com',
+            'role': Role.WARD_MEMBER,
+            'name': 'Member 2',
+            'aadhar_id': '888888888888',
+            'phone': '9876543888',
+            'panchayat': self.panchayat.id,
+            'ward': self.ward_1.id,
+            'password': 'password123',
+            'confirm_password': 'password123',
+        }
+        form = CustomUserCreationForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("__all__", form.errors)
+        self.assertTrue(any("already has a Ward Representative" in err for err in form.errors["__all__"]))
 
 
 
