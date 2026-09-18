@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-from .models import Taluk, Panchayat, Ward, User, Role, Post, PostScope
+from .models import Taluk, Panchayat, Ward, User, Role, Post, PostScope, Alert, AlertCategory, Complaint, ComplaintStatus, ComplaintCategory
 from lsg.forms.auth import RegistrationForm, LoginForm
 
 class AuthenticationTests(TestCase):
@@ -1025,6 +1025,400 @@ class ManageMembersTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("__all__", form.errors)
         self.assertTrue(any("already has a Ward Representative" in err for err in form.errors["__all__"]))
+
+
+class AlertManagementTests(TestCase):
+
+    def setUp(self):
+        # Set up geography
+        self.taluk = Taluk.objects.create(name="Central Taluk")
+        self.panchayat_a = Panchayat.objects.create(name="Panchayat A", taluk=self.taluk)
+        self.panchayat_b = Panchayat.objects.create(name="Panchayat B", taluk=self.taluk)
+        self.ward_a1 = Ward.objects.create(number=1, name="Ward A1", panchayat=self.panchayat_a)
+        self.ward_a2 = Ward.objects.create(number=2, name="Ward A2", panchayat=self.panchayat_a)
+
+        # Users
+        self.president = User.objects.create_user(
+            username='pres@example.com', email='pres@example.com', password='password123',
+            name='President A', role=Role.PANCHAYAT_PRESIDENT, panchayat=self.panchayat_a,
+            phone='9876543000', aadhar_id='999999000000', age=45
+        )
+        self.ward_member = User.objects.create_user(
+            username='wm@example.com', email='wm@example.com', password='password123',
+            name='Member A1', role=Role.WARD_MEMBER, panchayat=self.panchayat_a, ward=self.ward_a1,
+            phone='9876543001', aadhar_id='999999000001', age=30
+        )
+        self.villager = User.objects.create_user(
+            username='vil@example.com', email='vil@example.com', password='password123',
+            name='Villager A1', role=Role.VILLAGER, panchayat=self.panchayat_a, ward=self.ward_a1,
+            phone='9876543002', aadhar_id='999999000002', age=25
+        )
+
+        # Alerts
+        self.alert_panchayat = Alert.objects.create(
+            author=self.president, title="Panchayat Alert", content="Panchayat critical update",
+            category=AlertCategory.EMERGENCY, scope=PostScope.PANCHAYAT, panchayat=self.panchayat_a
+        )
+        self.alert_ward_a1 = Alert.objects.create(
+            author=self.ward_member, title="Ward 1 Alert", content="Ward 1 announcement",
+            category=AlertCategory.GENERAL, scope=PostScope.WARD, panchayat=self.panchayat_a, ward=self.ward_a1
+        )
+        self.alert_ward_a2 = Alert.objects.create(
+            author=self.president, title="Ward 2 Alert", content="Ward 2 announcement",
+            category=AlertCategory.HEALTH, scope=PostScope.WARD, panchayat=self.panchayat_a, ward=self.ward_a2
+        )
+
+    def test_alert_visibility(self):
+        # Villager in Ward A1 should see:
+        # - Panchayat Alert
+        # - Ward 1 Alert
+        # But not Ward 2 Alert
+        self.client.force_login(self.villager)
+        response = self.client.get(reverse('alerts'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.alert_panchayat.title)
+        self.assertContains(response, self.alert_ward_a1.title)
+        self.assertNotContains(response, self.alert_ward_a2.title)
+
+    def test_villager_cannot_manage_alerts(self):
+        self.client.force_login(self.villager)
+        
+        # Cannot access create view
+        response = self.client.get(reverse('create_alert'))
+        self.assertRedirects(response, reverse('alerts'))
+        
+        # Cannot post to create view
+        create_data = {'title': 'Villager Alert', 'category': AlertCategory.GENERAL}
+        response = self.client.post(reverse('create_alert'), data=create_data)
+        self.assertRedirects(response, reverse('alerts'))
+        self.assertEqual(Alert.objects.filter(title='Villager Alert').count(), 0)
+
+    def test_alert_crud_flows(self):
+        self.client.force_login(self.ward_member)
+        
+        # 1. Create alert
+        create_data = {
+            'title': 'New WM Alert',
+            'category': AlertCategory.EMERGENCY
+        }
+        response = self.client.post(reverse('create_alert'), data=create_data)
+        self.assertRedirects(response, reverse('alerts'))
+        new_alert = Alert.objects.get(title='New WM Alert')
+        self.assertEqual(new_alert.scope, PostScope.WARD)
+        self.assertEqual(new_alert.ward, self.ward_a1)
+
+        # 2. Edit own alert
+        edit_data = {
+            'title': 'New WM Alert Updated',
+            'category': AlertCategory.EMERGENCY
+        }
+        response = self.client.post(reverse('edit_alert', args=[new_alert.id]), data=edit_data)
+        self.assertRedirects(response, reverse('alerts'))
+        new_alert.refresh_from_db()
+        self.assertEqual(new_alert.title, 'New WM Alert Updated')
+
+        # 3. Cannot edit other member's alert
+        response = self.client.post(reverse('edit_alert', args=[self.alert_panchayat.id]), data={'title': 'Hacked'})
+        self.assertRedirects(response, reverse('alerts'))
+        self.alert_panchayat.refresh_from_db()
+        self.assertNotEqual(self.alert_panchayat.title, 'Hacked')
+
+        # 4. Delete own alert
+        response = self.client.post(reverse('delete_alert', args=[new_alert.id]))
+        self.assertRedirects(response, reverse('alerts'))
+        self.assertFalse(Alert.objects.filter(id=new_alert.id).exists())
+
+    def test_panchayat_president_management(self):
+        self.client.force_login(self.president)
+        
+        # Create Panchayat alert
+        create_data = {
+            'title': 'New Pres Alert',
+            'category': AlertCategory.EMERGENCY,
+            'scope': PostScope.PANCHAYAT
+        }
+        response = self.client.post(reverse('create_alert'), data=create_data)
+        self.assertRedirects(response, reverse('alerts'))
+        new_alert = Alert.objects.get(title='New Pres Alert')
+        self.assertEqual(new_alert.scope, PostScope.PANCHAYAT)
+
+        # President can delete ward member's alert in their Panchayat
+        response = self.client.post(reverse('delete_alert', args=[self.alert_ward_a1.id]))
+        self.assertRedirects(response, reverse('alerts'))
+        self.assertFalse(Alert.objects.filter(id=self.alert_ward_a1.id).exists())
+
+    def test_alert_filtering_and_pagination(self):
+        self.client.force_login(self.president)
+        
+        # Clear database alerts for precise pagination testing
+        Alert.objects.all().delete()
+        
+        # Create 15 alerts (5 health, 5 emergency, 5 development) spanning different scopes
+        alerts_to_create = []
+        for i in range(15):
+            category = AlertCategory.HEALTH if i % 3 == 0 else (AlertCategory.EMERGENCY if i % 3 == 1 else AlertCategory.DEVELOPMENT)
+            scope = PostScope.PANCHAYAT if i % 2 == 0 else PostScope.WARD
+            alerts_to_create.append(
+                Alert(
+                    author=self.president,
+                    title=f"Alert {i}",
+                    category=category,
+                    scope=scope,
+                    panchayat=self.panchayat_a
+                )
+            )
+        Alert.objects.bulk_create(alerts_to_create)
+        
+        # Verify pagination after 10
+        response = self.client.get(reverse('alerts'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['alerts']), 10)
+        
+        # Filter by category HEALTH
+        response = self.client.get(reverse('alerts') + '?category=HEALTH')
+        self.assertEqual(len(response.context['alerts']), 5)
+        
+        # Filter by scope WARD
+        response = self.client.get(reverse('alerts') + '?scope=WARD')
+        self.assertEqual(len(response.context['alerts']), 7)
+
+    def test_duplicate_alert_validation(self):
+        # Clean setup alert
+        self.client.force_login(self.president)
+        Alert.objects.all().delete()
+        
+        # Initial Alert
+        Alert.objects.create(
+            author=self.president, title="Duplicated Alert",
+            category=AlertCategory.EMERGENCY, scope=PostScope.PANCHAYAT, panchayat=self.panchayat_a
+        )
+        
+        # Try to post duplicate alert (expect error messages rendered or validation error)
+        create_data = {
+            'title': 'Duplicated Alert',
+            'category': AlertCategory.EMERGENCY,
+            'scope': PostScope.PANCHAYAT
+        }
+        response = self.client.post(reverse('create_alert'), data=create_data)
+        # Should re-render form with error message (does not redirect) or return validation fail logs
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Alert.objects.filter(title='Duplicated Alert').count(), 1)
+
+    def test_title_length_limit(self):
+        self.client.force_login(self.president)
+        
+        long_title = "A" * 151
+        create_data = {
+            'title': long_title,
+            'category': AlertCategory.GENERAL,
+            'scope': PostScope.PANCHAYAT
+        }
+        response = self.client.post(reverse('create_alert'), data=create_data)
+        # Should not redirect, stays on form page indicating failure
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Alert.objects.filter(title=long_title).count(), 0)
+
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+class DocumentManagementTests(TestCase):
+
+    def setUp(self):
+        # Set up geography
+        self.taluk = Taluk.objects.create(name="Central Taluk")
+        self.panchayat_a = Panchayat.objects.create(name="Panchayat A", taluk=self.taluk)
+        self.panchayat_b = Panchayat.objects.create(name="Panchayat B", taluk=self.taluk)
+        self.ward_a1 = Ward.objects.create(number=1, name="Ward A1", panchayat=self.panchayat_a)
+        self.ward_a2 = Ward.objects.create(number=2, name="Ward A2", panchayat=self.panchayat_a)
+
+        # Users
+        self.president = User.objects.create_user(
+            username='pres@example.com', email='pres@example.com', password='password123',
+            name='President A', role=Role.PANCHAYAT_PRESIDENT, panchayat=self.panchayat_a,
+            phone='9876543000', aadhar_id='999999000000', age=45
+        )
+        self.ward_member = User.objects.create_user(
+            username='wm@example.com', email='wm@example.com', password='password123',
+            name='Member A1', role=Role.WARD_MEMBER, panchayat=self.panchayat_a, ward=self.ward_a1,
+            phone='9876543001', aadhar_id='999999000001', age=30
+        )
+        self.villager = User.objects.create_user(
+            username='vil@example.com', email='vil@example.com', password='password123',
+            name='Villager A1', role=Role.VILLAGER, panchayat=self.panchayat_a, ward=self.ward_a1,
+            phone='9876543002', aadhar_id='999999000002', age=25
+        )
+
+        from .models import Document, DocumentCategory
+        self.test_file_1 = SimpleUploadedFile("test_doc.pdf", b"file_content_1", content_type="application/pdf")
+        self.test_file_2 = SimpleUploadedFile("test_doc_2.pdf", b"file_content_2", content_type="application/pdf")
+
+        # Documents
+        self.doc_panchayat = Document.objects.create(
+            author=self.president, title="Panchayat Circular", file=self.test_file_1,
+            category=DocumentCategory.CIRCULAR, scope=PostScope.PANCHAYAT, panchayat=self.panchayat_a
+        )
+        self.doc_ward_a1 = Document.objects.create(
+            author=self.ward_member, title="Ward 1 Notice", file=self.test_file_1,
+            category=DocumentCategory.NOTICE, scope=PostScope.WARD, panchayat=self.panchayat_a, ward=self.ward_a1
+        )
+        self.doc_ward_a2 = Document.objects.create(
+            author=self.president, title="Ward 2 Form", file=self.test_file_1,
+            category=DocumentCategory.FORM, scope=PostScope.WARD, panchayat=self.panchayat_a, ward=self.ward_a2
+        )
+
+    def test_document_visibility(self):
+        # Villager in Ward A1 should see Panchayat Circular and Ward 1 Notice, but not Ward 2 Form
+        self.client.force_login(self.villager)
+        response = self.client.get(reverse('documents'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.doc_panchayat.title)
+        self.assertContains(response, self.doc_ward_a1.title)
+        self.assertNotContains(response, self.doc_ward_a2.title)
+
+    def test_villager_cannot_manage_documents(self):
+        self.client.force_login(self.villager)
+        
+        # Cannot access upload view
+        response = self.client.get(reverse('upload_document'))
+        self.assertRedirects(response, reverse('documents'))
+        
+        # Cannot post to upload view
+        upload_data = {'title': 'Villager Doc', 'category': 'CIRCULAR'}
+        response = self.client.post(reverse('upload_document'), data=upload_data)
+        self.assertRedirects(response, reverse('documents'))
+        from .models import Document
+        self.assertEqual(Document.objects.filter(title='Villager Doc').count(), 0)
+
+    def test_document_crud_flows(self):
+        self.client.force_login(self.ward_member)
+        from .models import Document, DocumentCategory
+
+        # 1. Upload document
+        upload_data = {
+            'title': 'Elected Member Doc',
+            'category': DocumentCategory.CIRCULAR,
+            'file': self.test_file_2
+        }
+        response = self.client.post(reverse('upload_document'), data=upload_data)
+        self.assertRedirects(response, reverse('documents'))
+        
+        new_doc = Document.objects.get(title='Elected Member Doc')
+        self.assertEqual(new_doc.author, self.ward_member)
+        self.assertEqual(new_doc.scope, PostScope.WARD) # Automatically WARD for ward member
+
+        # 2. Edit document
+        edit_data = {
+            'title': 'Updated Member Doc',
+            'category': DocumentCategory.FORM
+        }
+        response = self.client.post(reverse('edit_document', args=[new_doc.id]), data=edit_data)
+        self.assertRedirects(response, reverse('documents'))
+        
+        new_doc.refresh_from_db()
+        self.assertEqual(new_doc.title, 'Updated Member Doc')
+        self.assertEqual(new_doc.category, DocumentCategory.FORM)
+
+        # 3. Toggle pin document
+        self.client.force_login(self.president)
+        response = self.client.post(reverse('toggle_pin_document', args=[new_doc.id]))
+        self.assertRedirects(response, reverse('documents'))
+        new_doc.refresh_from_db()
+        self.assertTrue(new_doc.is_pinned)
+
+        # 4. Delete document
+        response = self.client.post(reverse('delete_document', args=[new_doc.id]))
+        self.assertRedirects(response, reverse('documents'))
+        self.assertEqual(Document.objects.filter(id=new_doc.id).count(), 0)
+
+
+class ComplaintTests(TestCase):
+
+    def setUp(self):
+        self.taluk = Taluk.objects.create(name="Central Taluk")
+        self.panchayat = Panchayat.objects.create(name="Test Panchayat", taluk=self.taluk)
+        self.ward_1 = Ward.objects.create(number=1, name="Ward 1", panchayat=self.panchayat)
+        self.ward_2 = Ward.objects.create(number=2, name="Ward 2", panchayat=self.panchayat)
+
+        self.villager = User.objects.create_user(
+            username="villager@example.com",
+            email="villager@example.com",
+            password="password123",
+            phone="9876543210",
+            aadhar_id="111122223333",
+            role=Role.VILLAGER,
+            panchayat=self.panchayat,
+            ward=self.ward_1
+        )
+
+        self.ward_member = User.objects.create_user(
+            username="member1@example.com",
+            email="member1@example.com",
+            password="password123",
+            phone="9876543211",
+            aadhar_id="111122223334",
+            role=Role.WARD_MEMBER,
+            panchayat=self.panchayat,
+            ward=self.ward_1
+        )
+
+        self.president = User.objects.create_user(
+            username="president@example.com",
+            email="president@example.com",
+            password="password123",
+            phone="9876543212",
+            aadhar_id="111122223335",
+            role=Role.PANCHAYAT_PRESIDENT,
+            panchayat=self.panchayat,
+            ward=self.ward_2
+        )
+
+
+    def test_lodge_complaint_and_recipient_resolution(self):
+        self.client.force_login(self.villager)
+
+        response = self.client.post(reverse('create_complaint'), {
+            'subject': 'Water Leakage in Ward 1',
+            'category': ComplaintCategory.WATER,
+            'description': 'Main pipeline leaking near the water tank.',
+        })
+
+        self.assertRedirects(response, reverse('complaints'))
+        self.assertEqual(Complaint.objects.count(), 1)
+
+        complaint = Complaint.objects.first()
+        self.assertEqual(complaint.subject, 'Water Leakage in Ward 1')
+        self.assertEqual(complaint.villager, self.villager)
+        self.assertEqual(complaint.recipient, self.ward_member)
+        self.assertEqual(complaint.status, ComplaintStatus.PENDING)
+
+    def test_update_complaint_status_by_ward_member(self):
+        complaint = Complaint.objects.create(
+            villager=self.villager,
+            recipient=self.ward_member,
+            subject='Broken Street Light',
+            category=ComplaintCategory.ELECTRICITY,
+            description='Streetlight #4 is flicking and off.',
+            status=ComplaintStatus.PENDING,
+            panchayat=self.panchayat,
+            ward=self.ward_1
+        )
+
+        self.client.force_login(self.ward_member)
+
+        # Access detail page
+        response = self.client.get(reverse('complaint_detail', args=[complaint.id]))
+        self.assertEqual(response.status_code, 200)
+
+        # Update status to SOLVED
+        update_response = self.client.post(reverse('update_complaint_status', args=[complaint.id]), {
+            'status': ComplaintStatus.SOLVED
+        })
+        self.assertRedirects(update_response, reverse('complaint_detail', args=[complaint.id]))
+
+        complaint.refresh_from_db()
+        self.assertEqual(complaint.status, ComplaintStatus.SOLVED)
+
+
 
 
 

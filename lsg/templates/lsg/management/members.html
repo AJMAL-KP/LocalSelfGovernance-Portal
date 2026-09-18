@@ -41,7 +41,7 @@
                 <div class="relative flex-grow">
                     <input type="text" name="q" id="search-input" value="{{ q|default:'' }}" required
                         placeholder="Search villagers by name, email, phone, or Aadhar..." autocomplete="off"
-                        class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 pl-3 pr-10 py-2.5 focus:border-indigo-500 focus:outline-none transition">
+                        class="lsg-input pl-3 pr-10 !py-2.5">
 
                     <!-- Suggestions Dropdown -->
                     <div id="suggestions-dropdown"
@@ -51,7 +51,7 @@
 
                 <div class="shrink-0">
                     <select name="search_ward_id" id="search-ward-select"
-                        class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2.5 focus:border-indigo-500 focus:outline-none transition">
+                        class="lsg-input px-3 !py-2.5">
                         <option value="">All Wards</option>
                         {% for w in wards %}
                         <option value="{{ w.id }}" {% if search_ward_id == w.id|stringformat:"s" %}selected{% endif %}>

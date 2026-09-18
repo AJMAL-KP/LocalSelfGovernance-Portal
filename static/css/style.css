@@ -162,10 +162,18 @@ body {
     transition: all 0.2s ease-in-out;
 }
 
+.lsg-input:hover {
+    border-color: #cbd5e1;
+}
+
 html.dark .lsg-input {
-    background-color: #1e293b;
+    background-color: #0f172a;
     border-color: #334155;
     color: #f8fafc;
+}
+
+html.dark .lsg-input:hover {
+    border-color: #475569;
 }
 
 .lsg-input::placeholder {
@@ -179,13 +187,15 @@ html.dark .lsg-input::placeholder {
 .lsg-input:focus {
     border-color: #6366f1;
     background-color: #ffffff;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 0 3.5px rgba(99, 102, 241, 0.15);
     outline: none;
 }
 
 html.dark .lsg-input:focus {
     background-color: #0f172a;
     border-color: #818cf8;
+    box-shadow: 0 0 0 3.5px rgba(129, 140, 248, 0.25);
+    outline: none;
 }
 
 /* Custom Dropdown Styles (Scrollable Menu) */

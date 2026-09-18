@@ -7,41 +7,229 @@
 {% endblock %}
 
 {% block dashboard_content %}
-        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-5">
-            <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700/80">
-                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
-                    <i class="bi bi-chat-left-text text-indigo-600 dark:text-indigo-400"></i>
-                    <span>Grievance & Complaint Portal</span>
-                </h3>
+    <div class="space-y-6">
+        <!-- Complaints Page Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-6">
+            
+            <!-- Header Section -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700/80 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <i class="bi bi-chat-left-text text-indigo-600 dark:text-indigo-400"></i>
+                        <span>Grievance & Complaint Portal</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {% if user.role == 'VILLAGER' %}
+                            Track your registered civic complaints and report issues directly to your Ward Member in <strong class="text-slate-800 dark:text-slate-200">Ward {{ user.ward.number }} ({{ user.panchayat.name }})</strong>.
+                        {% elif user.role == 'WARD_MEMBER' %}
+                            Review, track, and update public grievances submitted by villagers in <strong class="text-slate-800 dark:text-slate-200">Ward {{ user.ward.number }}</strong>.
+                        {% elif user.role == 'PANCHAYAT_PRESIDENT' %}
+                            Oversee and resolve civic complaints across <strong class="text-slate-800 dark:text-slate-200">{{ user.panchayat.name }}</strong>.
+                        {% endif %}
+                    </p>
+                </div>
                 
-                <button class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 opacity-60 cursor-not-allowed border border-indigo-100 dark:border-indigo-900/60" disabled>
-                    <i class="bi bi-plus-circle"></i>
-                    <span>Lodge Complaint</span>
-                </button>
+                {% if user.role == 'VILLAGER' %}
+                    {% if recipient %}
+                        <a href="{% url 'create_complaint' %}" class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 dark:shadow-none transition shrink-0">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>Lodge Complaint</span>
+                        </a>
+                    {% else %}
+                        <button disabled class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl text-slate-400 bg-slate-100 dark:bg-slate-700/50 cursor-not-allowed shrink-0" title="No Ward Representative assigned yet">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <span>No Representative Assigned</span>
+                        </button>
+                    {% endif %}
+                {% endif %}
             </div>
 
-            <!-- Role explanation -->
-            <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 text-indigo-900 dark:text-indigo-300 text-xs flex items-start gap-3">
-                <i class="bi bi-info-circle text-indigo-600 dark:text-indigo-400 text-base shrink-0"></i>
-                <div>
-                    {% if user.role == 'VILLAGER' %}
-                        Track your submitted civic issues and report new ward level complaints directly to elected representatives.
-                    {% elif user.role == 'WARD_MEMBER' %}
-                        Review and resolve public grievances filed by residents of <strong>Ward {{ user.ward.number }}</strong>.
-                    {% elif user.role == 'PANCHAYAT_PRESIDENT' %}
-                        Oversee and manage high-level civic complaints for <strong>{{ user.panchayat.name }}</strong>.
+            <!-- Status Tabs (Defaults to Pending, 'All' option removed) -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-b border-slate-100 dark:border-slate-700/60">
+                <a href="?status=PENDING{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" 
+                   class="px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2 {% if selected_status == 'PENDING' %}bg-amber-500 text-white shadow-xs{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50{% endif %}">
+                    <span>Pending</span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] {% if selected_status == 'PENDING' %}bg-amber-600 text-white{% else %}bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400{% endif %}">{{ status_counts.PENDING }}</span>
+                </a>
+
+                <a href="?status=IN_PROGRESS{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" 
+                   class="px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2 {% if selected_status == 'IN_PROGRESS' %}bg-blue-600 text-white shadow-xs{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50{% endif %}">
+                    <span>In Progress</span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] {% if selected_status == 'IN_PROGRESS' %}bg-blue-700 text-white{% else %}bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400{% endif %}">{{ status_counts.IN_PROGRESS }}</span>
+                </a>
+
+                <a href="?status=SOLVED{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" 
+                   class="px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2 {% if selected_status == 'SOLVED' %}bg-emerald-600 text-white shadow-xs{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50{% endif %}">
+                    <span>Solved</span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] {% if selected_status == 'SOLVED' %}bg-emerald-700 text-white{% else %}bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400{% endif %}">{{ status_counts.SOLVED }}</span>
+                </a>
+
+                <a href="?status=REJECTED{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" 
+                   class="px-3.5 py-2 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-2 {% if selected_status == 'REJECTED' %}bg-rose-600 text-white shadow-xs{% else %}text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50{% endif %}">
+                    <span>Rejected</span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] {% if selected_status == 'REJECTED' %}bg-rose-700 text-white{% else %}bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400{% endif %}">{{ status_counts.REJECTED }}</span>
+                </a>
+            </div>
+
+            <!-- Filters and Sorting Box -->
+            <form method="get" id="filter-form" class="bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl p-4 flex flex-col md:flex-row gap-3">
+                <input type="hidden" name="status" value="{{ selected_status }}">
+                
+                <!-- Category Filter -->
+                <div class="flex-grow">
+                    <label for="category-select" class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Category</label>
+                    <select name="category" id="category-select" onchange="this.form.submit()" class="lsg-input">
+                        <option value="">All Categories</option>
+                        {% for val, label in categories %}
+                            <option value="{{ val }}" {% if selected_category == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Year Filter -->
+                <div class="w-full md:w-32">
+                    <label for="year-select" class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Year</label>
+                    <select name="year" id="year-select" onchange="this.form.submit()" class="lsg-input">
+                        <option value="">All Years</option>
+                        {% for y in years %}
+                            <option value="{{ y }}" {% if selected_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Sort Order -->
+                <div class="w-full md:w-36">
+                    <label for="sort-select" class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Sort By</label>
+                    <select name="sort" id="sort-select" onchange="this.form.submit()" class="lsg-input">
+                        <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest First</option>
+                        <option value="oldest" {% if selected_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+                    </select>
+                </div>
+            </form>
+
+            <!-- Complaints Feed -->
+            {% if complaints %}
+                <div class="space-y-3">
+                    {% for c in complaints %}
+                        <div class="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/40 transition hover:bg-slate-50/40 dark:hover:bg-slate-700/20">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="space-y-1 min-w-0 flex-grow">
+                                    
+                                    <!-- Title & Status Badges -->
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <!-- Status Badge -->
+                                        {% if c.status == 'PENDING' %}
+                                            <span class="font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded-md border border-amber-100 dark:border-amber-900/40 text-[10px]">Pending</span>
+                                        {% elif c.status == 'IN_PROGRESS' %}
+                                            <span class="font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/40 text-[10px]">In Progress</span>
+                                        {% elif c.status == 'SOLVED' %}
+                                            <span class="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900/40 text-[10px]">Solved</span>
+                                        {% elif c.status == 'REJECTED' %}
+                                            <span class="font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded-md border border-rose-100 dark:border-rose-900/40 text-[10px]">Rejected</span>
+                                        {% endif %}
+
+                                        <a href="{% url 'complaint_detail' c.id %}" class="text-sm font-bold text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline break-words">
+                                            {{ c.subject }}
+                                        </a>
+                                    </div>
+
+                                    <!-- Category, Villager, Date metadata line matching documents/alerts -->
+                                    <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-medium pt-0.5">
+                                        <span class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-900/40">
+                                            {{ c.get_category_display }}
+                                        </span>
+                                        
+                                        <span class="text-slate-300 dark:text-slate-700">•</span>
+
+                                        <span class="text-slate-600 dark:text-slate-400 font-semibold">{{ c.villager.name|default:c.villager.username }} (Ward {{ c.ward.number }})</span>
+
+                                        <span class="text-slate-300 dark:text-slate-700">•</span>
+
+                                        <span>{{ c.created_at|date:"d M Y, h:i A" }}</span>
+
+                                        {% if c.attachment %}
+                                            <span class="text-slate-300 dark:text-slate-700">•</span>
+                                            <span class="text-indigo-600 dark:text-indigo-400 font-semibold">
+                                                Attachment
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                </div>
+
+                                <!-- Actions Right Block (Quick Status Select & Details Button) -->
+                                <div class="shrink-0 flex items-center gap-2 pl-2">
+                                    {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_PRESIDENT' or user.is_superuser %}
+                                        <form method="post" action="{% url 'update_complaint_status' c.id %}" class="m-0 inline-flex items-center">
+                                            {% csrf_token %}
+                                            <select name="status" onchange="this.form.submit()" class="text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-400 focus:ring-1 focus:ring-indigo-500 transition">
+                                                {% for val, label in statuses %}
+                                                    <option value="{{ val }}" {% if c.status == val %}selected{% endif %}>{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </form>
+                                    {% endif %}
+
+                                    <a href="{% url 'complaint_detail' c.id %}" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-100 dark:border-indigo-900/60 transition">
+                                        <span>Details</span>
+                                        <i class="bi bi-chevron-right text-[10px]"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/80">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                        
+                        <div class="flex items-center gap-1">
+                            {% if page_obj.has_previous %}
+                                <a href="?page={{ page_obj.previous_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                                    ← Previous
+                                </a>
+                            {% endif %}
+                            
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                                    Next →
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+            {% else %}
+                <!-- Empty State -->
+                <div class="bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center space-y-3">
+                    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-400 text-3xl">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-700 dark:text-slate-200 text-base">No Complaints Found</h4>
+                    <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                        {% if selected_status or selected_category or selected_year %}
+                            No grievance tickets match your selected filters. Try changing or clearing your filters.
+                        {% else %}
+                            There are currently no recorded grievances in your queue.
+                        {% endif %}
+                    </p>
+                    {% if user.role == 'VILLAGER' and recipient %}
+                        <div class="pt-2">
+                            <a href="{% url 'create_complaint' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition">
+                                <i class="bi bi-plus-circle"></i>
+                                <span>Lodge New Complaint</span>
+                            </a>
+                        </div>
                     {% endif %}
                 </div>
-            </div>
+            {% endif %}
 
-            <div class="bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center space-y-3">
-                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-400 text-3xl">
-                    <i class="bi bi-clipboard-check"></i>
-                </div>
-                <h4 class="font-bold text-slate-700 dark:text-slate-200 text-base">No Complaints Found</h4>
-                <p class="text-xs text-slate-400 max-w-sm mx-auto">
-                    There are no recorded grievances or active issue tickets in your queue.
-                </p>
-            </div>
         </div>
+    </div>
 {% endblock %}
+
+{% block right_sidebar_block %}{% endblock %}
