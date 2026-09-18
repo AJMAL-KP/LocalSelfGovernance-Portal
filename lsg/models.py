@@ -164,3 +164,175 @@ class Post(models.Model):
     def __str__(self):
         return f"{self.title} - {self.author.username} ({self.get_scope_display()})"
 
+
+class AlertCategory(models.TextChoices):
+    EMERGENCY = 'EMERGENCY', 'Emergency'
+    HEALTH = 'HEALTH', 'Health & Sanitation'
+    DEVELOPMENT = 'DEVELOPMENT', 'Development Work'
+    GENERAL = 'GENERAL', 'General Announcement'
+
+
+class Alert(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='alerts')
+    title = models.CharField(max_length=255)
+    content = models.TextField(blank=True, default='')
+    category = models.CharField(
+        max_length=50,
+        choices=AlertCategory.choices,
+        default=AlertCategory.GENERAL
+    )
+    scope = models.CharField(
+        max_length=20,
+        choices=PostScope.choices,
+        default=PostScope.WARD
+    )
+    panchayat = models.ForeignKey(
+        Panchayat,
+        on_delete=models.CASCADE,
+        related_name='alerts'
+    )
+    ward = models.ForeignKey(
+        Ward,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='alerts'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        super().clean()
+        if self.title and len(self.title) > 150:
+            raise ValidationError({'title': "Title cannot exceed 150 characters."})
+            
+        # Duplication check
+        if self.panchayat_id:
+            duplicate = Alert.objects.filter(
+                title=self.title,
+                panchayat_id=self.panchayat_id,
+                category=self.category,
+                scope=self.scope
+            )
+            if self.pk:
+                duplicate = duplicate.exclude(pk=self.pk)
+            if duplicate.exists():
+                raise ValidationError("A duplicate alert with this title already exists in your Panchayat.")
+
+    def __str__(self):
+        return f"{self.title} - {self.author.username} ({self.category})"
+
+
+class DocumentCategory(models.TextChoices):
+    CIRCULAR = 'CIRCULAR', 'Official Circular'
+    NOTICE = 'NOTICE', 'Public Notice'
+    FORM = 'FORM', 'Application Form'
+    REPORT = 'REPORT', 'Report & Minutes'
+
+
+class Document(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to='documents/', verbose_name="Document File")
+    category = models.CharField(
+        max_length=50,
+        choices=DocumentCategory.choices,
+        default=DocumentCategory.CIRCULAR
+    )
+    scope = models.CharField(
+        max_length=20,
+        choices=PostScope.choices,
+        default=PostScope.WARD
+    )
+    panchayat = models.ForeignKey(
+        Panchayat,
+        on_delete=models.CASCADE,
+        related_name='documents'
+    )
+    ward = models.ForeignKey(
+        Ward,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='documents'
+    )
+    is_pinned = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        super().clean()
+        if self.title and len(self.title) > 150:
+            raise ValidationError({'title': "Title cannot exceed 150 characters."})
+
+    def __str__(self):
+        return f"{self.title} - {self.author.username} ({self.category})"
+
+
+class ComplaintStatus(models.TextChoices):
+    PENDING = 'PENDING', 'Pending'
+    IN_PROGRESS = 'IN_PROGRESS', 'In Progress'
+    SOLVED = 'SOLVED', 'Solved'
+    REJECTED = 'REJECTED', 'Rejected'
+
+
+class ComplaintCategory(models.TextChoices):
+    ROADS = 'ROADS', 'Roads & Infrastructure'
+    WATER = 'WATER', 'Water Supply'
+    ELECTRICITY = 'ELECTRICITY', 'Electricity & Streetlights'
+    SANITATION = 'SANITATION', 'Sanitation & Waste'
+    DRAINAGE = 'DRAINAGE', 'Drainage & Sewage'
+    GENERAL = 'GENERAL', 'General Grievance'
+
+
+class Complaint(models.Model):
+    villager = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='submitted_complaints'
+    )
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_complaints'
+    )
+    subject = models.CharField(max_length=150)
+    category = models.CharField(
+        max_length=50,
+        choices=ComplaintCategory.choices,
+        default=ComplaintCategory.GENERAL
+    )
+    description = models.TextField()
+    attachment = models.FileField(
+        upload_to='complaints/',
+        blank=True,
+        null=True,
+        verbose_name="Attachment File"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=ComplaintStatus.choices,
+        default=ComplaintStatus.PENDING
+    )
+    panchayat = models.ForeignKey(
+        Panchayat,
+        on_delete=models.CASCADE,
+        related_name='complaints'
+    )
+    ward = models.ForeignKey(
+        Ward,
+        on_delete=models.CASCADE,
+        related_name='complaints'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        super().clean()
+        if self.subject and len(self.subject) > 150:
+            raise ValidationError({'subject': "Subject cannot exceed 150 characters."})
+
+    def __str__(self):
+        return f"{self.subject} - {self.villager.username} ({self.get_status_display()})"
+
+

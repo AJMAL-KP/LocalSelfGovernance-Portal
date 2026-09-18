@@ -2,9 +2,10 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django import forms
-from .models import Taluk, Panchayat, Ward, User, Post, Role
+from .models import Taluk, Panchayat, Ward, User, Post, Alert, Document, Complaint, Role
 
 def validate_user_role_constraints(form, cleaned_data):
+
     role = cleaned_data.get('role')
     panchayat = cleaned_data.get('panchayat')
     ward = cleaned_data.get('ward')
@@ -119,4 +120,12 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ('title', 'author', 'scope', 'panchayat', 'ward', 'created_at')
     list_filter = ('scope', 'panchayat', 'ward')
     search_fields = ('title', 'content', 'author__username')
+
+
+@admin.register(Complaint)
+class ComplaintAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'villager', 'recipient', 'category', 'status', 'panchayat', 'ward', 'created_at')
+    list_filter = ('status', 'category', 'panchayat', 'ward')
+    search_fields = ('subject', 'description', 'villager__username', 'recipient__username')
+
 

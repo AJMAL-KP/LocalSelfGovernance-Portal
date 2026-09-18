@@ -1,15 +1,111 @@
 {% extends 'lsg/dashboard_base.html' %}
 
-{% block title %}Complaint Details - LSG Portal{% endblock %}
+{% block title %}{{ complaint.subject }} - Complaint Details{% endblock %}
 
 {% block sidebar %}
     {% include 'lsg/partials/sidebar.html' with active_page='complaints' %}
 {% endblock %}
 
 {% block dashboard_content %}
-        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-5">
-            <h3 class="font-bold text-slate-900 text-base border-b border-slate-100 pb-3">Complaint Details</h3>
-            <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
-                <p class="text-xs text-slate-400">Detail view placeholder for a specific complaint.</p>
+    <div class="space-y-6">
+        <!-- Main Detail Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-6">
+            
+            <!-- Top Header & Back Link -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700/80 gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <a href="{% url 'complaints' %}" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition shrink-0" title="Back to complaints">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div class="min-w-0">
+                        <span class="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">Complaint #{{ complaint.id }}</span>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 leading-snug truncate">{{ complaint.subject }}</h2>
+                    </div>
+                </div>
+
+                <!-- Status Select Dropdown (for Representatives) or Badge (for Residents) -->
+                {% if is_recipient_or_rep %}
+                    <form method="post" action="{% url 'update_complaint_status' complaint.id %}" class="m-0 inline-flex items-center shrink-0">
+                        {% csrf_token %}
+                        <select name="status" onchange="this.form.submit()" class="text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer shadow-xs transition border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:border-indigo-400 focus:ring-1 focus:ring-indigo-500">
+                            {% for val, label in statuses %}
+                                <option value="{{ val }}" {% if complaint.status == val %}selected{% endif %}>Status: {{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                {% else %}
+                    <!-- Status Badge -->
+                    {% if complaint.status == 'PENDING' %}
+                        <span class="font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-md border border-amber-100 dark:border-amber-900/40 text-xs shrink-0">Pending</span>
+                    {% elif complaint.status == 'IN_PROGRESS' %}
+                        <span class="font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-1 rounded-md border border-blue-100 dark:border-blue-900/40 text-xs shrink-0">In Progress</span>
+                    {% elif complaint.status == 'SOLVED' %}
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-md border border-emerald-100 dark:border-emerald-900/40 text-xs shrink-0">Solved</span>
+                    {% elif complaint.status == 'REJECTED' %}
+                        <span class="font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-1 rounded-md border border-rose-100 dark:border-rose-900/40 text-xs shrink-0">Rejected</span>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Metadata Info Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                <!-- Resident Info -->
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Filed By Resident</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ complaint.villager.name|default:complaint.villager.username }}</span>
+                    <span class="text-slate-500 dark:text-slate-400">Ward {{ complaint.ward.number }}, {{ complaint.panchayat.name }}</span>
+                </div>
+
+                <!-- Recipient Info -->
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Assigned Representative</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ complaint.recipient.name|default:complaint.recipient.username }}</span>
+                    <span class="text-slate-500 dark:text-slate-400">{{ complaint.recipient.get_role_display }}</span>
+                </div>
+
+                <!-- Category & Date -->
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Category & Date</span>
+                    <span class="font-bold text-indigo-600 dark:text-indigo-400 block">{{ complaint.get_category_display }}</span>
+                    <span class="text-slate-500 dark:text-slate-400">{{ complaint.created_at|date:"d M Y, h:i A" }}</span>
+                </div>
+            </div>
+
+            <!-- Description Block -->
+            <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Detailed Description</h4>
+                <div class="p-5 rounded-2xl bg-white dark:bg-slate-900/20 border border-slate-200/80 dark:border-slate-700/80 text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line leading-relaxed">
+                    {{ complaint.description }}
+                </div>
+            </div>
+
+            <!-- Attachment File Section -->
+            {% if complaint.attachment %}
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Attached File</h4>
+                    <div class="flex items-center justify-between p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/30">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-base shrink-0">
+                                <i class="bi bi-file-earmark"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="block font-bold text-slate-900 dark:text-slate-100 text-xs truncate">
+                                    {{ complaint.attachment.name }}
+                                </span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400">Attached evidence file</span>
+                            </div>
+                        </div>
+
+                        <a href="{{ complaint.attachment.url }}" target="_blank" download class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shrink-0">
+                            <i class="bi bi-download"></i>
+                            <span>Download File</span>
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
         </div>
+    </div>
 {% endblock %}
+
+{% block right_sidebar_block %}{% endblock %}

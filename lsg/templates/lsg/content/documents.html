@@ -7,43 +7,244 @@
 {% endblock %}
 
 {% block dashboard_content %}
-        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-5">
-            <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700/80">
-                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
-                    <i class="bi bi-file-earmark-text text-indigo-600 dark:text-indigo-400"></i>
-                    <span>Official Documents & Circulars</span>
-                </h3>
+    <div class="space-y-6">
+        <!-- Documents Page Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-6">
+            
+            <!-- Header Section -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700/80 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <i class="bi bi-file-earmark-text text-indigo-600 dark:text-indigo-400"></i>
+                        <span>Official Documents & Circulars</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Public notices, circulars, application forms, and reports for <strong class="text-slate-800 dark:text-slate-200 font-semibold">{{ user.panchayat.name }}</strong>
+                    </p>
+                </div>
                 
                 {% if user.role == 'WARD_MEMBER' or user.role == 'PANCHAYAT_PRESIDENT' %}
-                    <button class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 opacity-60 cursor-not-allowed border border-indigo-100 dark:border-indigo-900/60" disabled>
+                    <a href="{% url 'upload_document' %}" class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 dark:shadow-none transition shrink-0">
                         <i class="bi bi-cloud-upload"></i>
-                        <span>Upload File</span>
-                    </button>
+                        <span>Upload Document</span>
+                    </a>
                 {% endif %}
             </div>
 
-            <!-- Role explanation -->
-            <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 text-indigo-900 dark:text-indigo-300 text-xs flex items-start gap-3">
-                <i class="bi bi-info-circle text-indigo-600 dark:text-indigo-400 text-base shrink-0"></i>
-                <div>
-                    {% if user.role == 'VILLAGER' %}
-                        You can view public notices, certificates, forms, and official circulars published by your Panchayat.
-                    {% elif user.role == 'WARD_MEMBER' %}
-                        You can upload documents and resources visible to villagers in <strong>Ward {{ user.ward.number }}</strong>.
-                    {% elif user.role == 'PANCHAYAT_PRESIDENT' %}
-                        You can upload and manage official administrative documents for <strong>{{ user.panchayat.name }}</strong>.
-                    {% endif %}
+            <!-- Filters and Sorting Box -->
+            <form method="get" id="filter-form" class="bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl p-4 flex flex-col md:flex-row gap-3">
+                
+                <!-- Category Filter -->
+                <div class="flex-grow">
+                    <label for="category-select" class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Category</label>
+                    <select name="category" id="category-select" onchange="this.form.submit()" class="lsg-input">
+                        <option value="">All Categories</option>
+                        {% for value, label in categories %}
+                            <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-            </div>
 
-            <div class="bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center space-y-3">
-                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-900 text-slate-400 text-3xl">
-                    <i class="bi bi-folder-x"></i>
+                <!-- Scope Filter -->
+                <div class="w-full md:w-44">
+                    <label for="scope-select" class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Scope</label>
+                    <select name="scope" id="scope-select" onchange="this.form.submit()" class="lsg-input">
+                        <option value="">All Scopes</option>
+                        <option value="PANCHAYAT" {% if selected_scope == 'PANCHAYAT' %}selected{% endif %}>Panchayat</option>
+                        <option value="WARD" {% if selected_scope == 'WARD' %}selected{% endif %}>Ward</option>
+                    </select>
                 </div>
-                <h4 class="font-bold text-slate-700 dark:text-slate-200 text-base">No Documents Available</h4>
-                <p class="text-xs text-slate-400 max-w-sm mx-auto">
-                    No official public documents or forms have been uploaded for your region yet.
-                </p>
+
+                <!-- Year Filter -->
+                <div class="w-full md:w-32">
+                    <label for="year-select" class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Year</label>
+                    <select name="year" id="year-select" onchange="this.form.submit()" class="lsg-input">
+                        <option value="">All Years</option>
+                        {% for y in years %}
+                            <option value="{{ y }}" {% if selected_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Sort Order -->
+                <div class="w-full md:w-36">
+                    <label for="sort-select" class="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Sort By</label>
+                    <select name="sort" id="sort-select" onchange="this.form.submit()" class="lsg-input">
+                        <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest First</option>
+                        <option value="oldest" {% if selected_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+                    </select>
+                </div>
+            </form>
+
+            <!-- Documents Feed -->
+            {% if documents %}
+                <div class="space-y-3">
+                    {% for d in documents %}
+                        <div class="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/40 transition hover:bg-slate-50/40 dark:hover:bg-slate-700/20 {% if d.is_pinned %}ring-1 ring-indigo-500/30 dark:ring-indigo-400/20{% endif %}">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="space-y-1 min-w-0 flex-grow">
+                                    <!-- Title on top (clickable to view file) -->
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        {% if d.is_pinned %}
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 px-1.5 py-0.5 rounded-md">
+                                                <i class="bi bi-pin-angle-fill"></i>
+                                                <span>Pinned</span>
+                                            </span>
+                                        {% endif %}
+                                        <a href="{{ d.file.url }}" target="_blank" class="text-sm font-bold text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline break-words" title="View Document">
+                                            {{ d.title }}
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Category, scope, date and time below -->
+                                    <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-medium pt-0.5">
+                                        {% if d.category == 'CIRCULAR' %}
+                                            <span class="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded-md border border-indigo-100 dark:border-indigo-900/40">Circular</span>
+                                        {% elif d.category == 'NOTICE' %}
+                                            <span class="font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded-md border border-amber-100 dark:border-amber-900/40">Notice</span>
+                                        {% elif d.category == 'FORM' %}
+                                            <span class="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900/40">Form</span>
+                                        {% else %}
+                                            <span class="font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/40">Report</span>
+                                        {% endif %}
+
+                                        <span class="text-slate-300 dark:text-slate-700">•</span>
+
+                                        {% if d.scope == 'PANCHAYAT' %}
+                                            <span class="font-bold text-indigo-600 dark:text-indigo-400">Panchayat Wide</span>
+                                        {% else %}
+                                            <span class="font-bold text-amber-600 dark:text-amber-400">Ward {{ d.ward.number }}</span>
+                                        {% endif %}
+
+                                        <span class="text-slate-300 dark:text-slate-700">•</span>
+
+                                        <span>{{ d.created_at|date:"d M Y, h:i A" }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons (Download, Pin, Edit, Delete) -->
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <!-- Download Button -->
+                                    <a href="{{ d.file.url }}" download class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition" title="Download Document">
+                                        <i class="bi bi-download text-sm"></i>
+                                    </a>
+
+                                    {% if d.can_manage %}
+                                        <!-- Pin/Unpin Toggle Button -->
+                                        <form method="post" action="{% url 'toggle_pin_document' d.id %}" class="m-0 inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w-8 h-8 rounded-xl flex items-center justify-center {% if d.is_pinned %}text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60{% else %}text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-indigo-600 dark:hover:text-indigo-400{% endif %} transition" title="{% if d.is_pinned %}Unpin Document{% else %}Pin Document{% endif %}">
+                                                <i class="bi {% if d.is_pinned %}bi-pin-fill{% else %}bi-pin{% endif %} text-sm"></i>
+                                            </button>
+                                        </form>
+
+                                        <!-- Edit Button -->
+                                        <a href="{% url 'edit_document' d.id %}" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition" title="Edit Document">
+                                            <i class="bi bi-pencil-square text-sm"></i>
+                                        </a>
+
+                                        <!-- Delete Button with Modal Confirm -->
+                                        <form method="post" action="{% url 'delete_document' d.id %}" class="m-0 inline" onsubmit="event.preventDefault(); showConfirmModal('Are you sure you want to delete the document &ldquo;{{ d.title|escapejs }}&rdquo;? This action cannot be undone.', this);">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition" title="Delete Document">
+                                                <i class="bi bi-trash3 text-sm"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination Controls -->
+                {% if page_obj.paginator.num_pages > 1 %}
+                    <div class="flex items-center justify-between bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-4 shadow-xs mt-4">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_scope %}&scope={{ selected_scope }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100/80 transition">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>Previous</span>
+                            </a>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800/40 cursor-not-allowed">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>Previous</span>
+                            </span>
+                        {% endif %}
+
+                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            Page <strong class="text-slate-800 dark:text-slate-200">{{ page_obj.number }}</strong> of <strong class="text-slate-800 dark:text-slate-200">{{ page_obj.paginator.num_pages }}</strong>
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_scope %}&scope={{ selected_scope }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100/80 transition">
+                                <span>Next</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl text-slate-300 dark:text-slate-600 bg-slate-50 dark:bg-slate-800/40 cursor-not-allowed">
+                                <span>Next</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-12 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-900/10">
+                    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-500 text-3xl mb-3">
+                        <i class="bi bi-folder-x"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-700 dark:text-slate-200 text-base">No Documents Found</h4>
+                    <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+                        There are currently no active public documents or official reports matching your filter options.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal for deletion -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 max-w-sm w-full p-6 shadow-2xl space-y-5 text-center">
+            <div class="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Delete Document</h3>
+                <p id="confirm-message" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed px-2"></p>
+            </div>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button type="button" onclick="closeConfirmModal()" class="w-1/2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-slate-200/60 dark:border-slate-700/60">
+                    Cancel
+                </button>
+                <button type="button" id="confirm-btn-yes" class="w-1/2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-100 dark:shadow-none transition">
+                    Delete
+                </button>
             </div>
         </div>
+    </div>
+
+    <script>
+        let pendingFormToSubmit = null;
+
+        function showConfirmModal(message, formElement) {
+            pendingFormToSubmit = formElement;
+            document.getElementById('confirm-message').textContent = message;
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            pendingFormToSubmit = null;
+        }
+
+        document.getElementById('confirm-btn-yes').addEventListener('click', function() {
+            if (pendingFormToSubmit) {
+                pendingFormToSubmit.submit();
+            }
+            closeConfirmModal();
+        });
+    </script>
 {% endblock %}
+
+{% block right_sidebar_block %}{% endblock %}

@@ -29,7 +29,6 @@ def register_view(request):
     
     return render(request, 'lsg/auth/register.html', {
         'form': form,
-        'panchanyats': panchayats,
         'panchayats': panchayats,
         'wards': wards
     })

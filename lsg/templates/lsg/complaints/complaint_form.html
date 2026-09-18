@@ -1,0 +1,114 @@
+{% extends 'lsg/dashboard_base.html' %}
+
+{% block title %}Lodge Complaint - LSG Portal{% endblock %}
+
+{% block sidebar %}
+    {% include 'lsg/partials/sidebar.html' with active_page='complaints' %}
+{% endblock %}
+
+{% block dashboard_content %}
+    <div class="max-w-2xl mx-auto space-y-6">
+        <!-- Card -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 shadow-sm space-y-6">
+            
+            <!-- Header with Back Button -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700/80">
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'complaints' %}" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Register New Complaint</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">File a grievance directly with your local representative</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recipient Info Box -->
+            <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 text-indigo-900 dark:text-indigo-300 text-xs flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg font-bold shrink-0">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-slate-900 dark:text-slate-100 text-sm">
+                            Recipient: {{ recipient.name|default:recipient.username }}
+                        </span>
+                        <span class="text-slate-500 dark:text-slate-400">
+                            {{ recipient.get_role_display }} — Ward {{ user.ward.number }}, {{ user.panchayat.name }}
+                        </span>
+                    </div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 shrink-0">
+                    Direct Ward Route
+                </span>
+            </div>
+
+            <!-- Form -->
+            <form method="post" enctype="multipart/form-data" class="space-y-5">
+                {% csrf_token %}
+
+                <!-- Subject -->
+                <div class="space-y-1.5">
+                    <label for="{{ form.subject.id_for_label }}" class="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {{ form.subject.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                        <p class="text-xs text-rose-600 font-medium mt-1">{{ form.subject.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Category -->
+                <div class="space-y-1.5">
+                    <label for="{{ form.category.id_for_label }}" class="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {{ form.category.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <p class="text-xs text-rose-600 font-medium mt-1">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1.5">
+                    <label for="{{ form.description.id_for_label }}" class="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {{ form.description.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.description }}
+                    <p class="text-[11px] text-slate-400">Max 1500 characters. Be specific about the location and problem.</p>
+                    {% if form.description.errors %}
+                        <p class="text-xs text-rose-600 font-medium mt-1">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Attachment -->
+                <div class="space-y-1.5">
+                    <label for="{{ form.attachment.id_for_label }}" class="block text-xs font-bold text-slate-700 dark:text-slate-200">
+                        {{ form.attachment.label }}
+                    </label>
+                    {{ form.attachment }}
+                    <p class="text-[11px] text-slate-400">Upload photos or supporting documents (PDF, JPG, PNG).</p>
+                    {% if form.attachment.errors %}
+                        <p class="text-xs text-rose-600 font-medium mt-1">{{ form.attachment.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Form Actions -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-700/80 flex items-center justify-end gap-3">
+                    <a href="{% url 'complaints' %}" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 dark:shadow-none transition flex items-center gap-2">
+                        <i class="bi bi-send"></i>
+                        <span>Register Complaint</span>
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block right_sidebar_block %}{% endblock %}
+
